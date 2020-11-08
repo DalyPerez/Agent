@@ -1,5 +1,5 @@
 import random
-from agent import Agent, Child, Robot
+from agent import Agent, Child, Robot, North, South, East, West
 
 ######## Env set ########
 GUARD    = "G"
@@ -50,7 +50,7 @@ class Cell:
             return self.floor + ' '
 
 class Environment:
-    def __init__(self, N, M, t, dirty_porcent, obstacle_porcent, num_childs):
+    def __init__(self, t, N, M):
         self.t = t
         self.map = [[None for j in range(M)] for i in range(N)]
         self.time = 0
@@ -60,8 +60,7 @@ class Environment:
         self.empty_cells = []
         self.childs = {}
         self.bot = None
-        
-        self.create_map(N, M, dirty_porcent, obstacle_porcent, num_childs)
+ 
 
     def create_map(self, N, M, dirty_porcent, obstacle_porcent, num_childs):
         num_of_dirty = int(self.total * dirty_porcent * 0.01)
@@ -98,15 +97,41 @@ class Environment:
         for i in range(len(childs_pos)):
             name = f'C{i}' 
             pos = childs_pos[i]
-            c = Child(name, pos)
+            c_dir = r.choice([North, South, East, West])
+            c = Child(name, pos, c_dir)
             self.childs[name] = c
             self.get_position(pos).acquire(c)
         
         # set robot position
         bot_pos = r.sample(cell, 1)[0]
-        print(bot_pos)
-        self.bot = Robot(bot_pos, None)
+        bot_dir = r.choice([North, South, East, West])
+        self.bot = Robot(bot_pos, None, bot_dir)
         self.get_position(bot_pos).acquire(self.bot)
+
+    def load_map(self, board):
+        self.N = len(board)
+        self.M = len(board[0])
+        self.map = [[None for j in range(self.M)] for i in range(self.N)]
+
+        for i in range(self.N):
+            for j in range(self.M):
+                item = board[i][j]
+                if item == 'E':
+                    cell = Cell(i, j, EMPTY)
+                elif item == 'O':
+                    cell = Cell(i, j, OBSTACLE)
+                elif item == 'G':
+                    cell = Cell(i, j, GUARD)
+                elif item == 'R':
+                    cell = Cell(i, j, EMPTY)
+                    self.bot = Robot((i, j), None,  (0, 1) )
+                    cell.acquire(self.bot)
+                else:
+                    cell = Cell(i, j, EMPTY)
+                    child = Child(item, (i, j), (1, 0))
+                    self.childs[item] = child
+                    cell.acquire(child)
+                self.map[i][j] = cell
 
     def inc_time(self):
         self.time = self.time + 1
@@ -121,20 +146,27 @@ class Environment:
 
     def is_valid_position(self, p):
         x, y = p
-        return 0 <= x < M and 0 <= y < N
+        return 0 <= x < self.N and 0 <= y < self.M
+    
+    def sum_positions(self, p1, p2):
+        x1, y1 = p1
+        x2, y2 = p2
+        return (x1 + x2, y1 + y2)
 
-    def robot_CanMove(self, p):
-        if is_valid_position(p):
+    def robot_CanMove(self, bot):
+        p = self.sum_positions(bot.position, bot.direction)
+        if self.is_valid_position(p):
             cell = self.get_position(p)
             if cell.is_obstacle() or (cell.is_guard() and cell.is_full()):
                 return False
             return True
         return False
 
-    def child_CanMove(self, p):
-        if is_valid_position(p):
+    def child_CanMove(self, child):
+        p = self.sum_positions(child.position, child.direction)
+        if self.is_valid_position(p):
             cell = self.get_position(p)
-            if cell.is_empty() or cell.is_obstacle():
+            if (cell.is_empty() and not cell.is_full()) or cell.is_obstacle():
                 return True
             else:
                 return False
@@ -151,34 +183,36 @@ class Environment:
     
     def move_child(self, child):
         child_cell = self.get_position(child.position)
-        new_cell = self.get_position(child.position + child.direction)
+        new_cell = self.get_position(self.sum_positions(child.position, child.direction))
         if new_cell.is_empty():
             child_cell.release()
             child.change_position()
             new_cell.acquire(child)
         elif new_cell.is_obstacle():
             can_push = False
-            next_p = new_cell.p + child.direction
+            next_p = self.sum_positions(new_cell.p, child.direction)
             while self.is_valid_position(next_p):
                 next_cell = self.get_position(next_p)
                 if next_cell.is_empty():
                     can_push = True
                     break
                 elif next_cell.is_obstacle():
-                    next_p = next_cell.p + child.direction
+                    next_p = self.sum_positions(next_cell.p, child.direction)
                 else:
                     break
             if can_push:
                 child.change_position()
                 child_cell.floor = EMPTY
+                child_cell.release()
                 new_cell.floor = EMPTY
                 new_cell.acquire(child)
-                next_p = new_cell.p + child.direction
+                next_p = self.sum_positions(new_cell.p, child.direction)
                 while True:
                     last_cell = self.get_position(next_p)
                     if last_cell.is_empty():
                         last_cell.floor = OBSTACLE
                         break
+                    next_p = self.sum_positions(last_cell.p, child.direction)
 
     def __str__(self):
         s = ""
@@ -186,5 +220,16 @@ class Environment:
             s += str(([ str(self.map[i][j]) for j in range(self.M) ])) + "\n"
         return s
 
-env = Environment(5, 5, 2, 10, 10, 2)
+board = [['E'], ['R'], ['G'], ['O'], ['E']]
+env = Environment(2, 5, 1)
+env.load_map(board)
 print(env)
+
+if env.robot_CanMove(env.bot):
+    env.move_robot(env.bot)
+    print(env)
+else:
+    print(False)
+
+
+
