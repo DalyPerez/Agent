@@ -31,12 +31,12 @@ class Simulator:
                     c.do_action(self.env)
             self.iter = self.iter + 1
             print(self.env)
-            # input()
+            input()
         return self.end_simulation()
          
 
 if __name__ == '__main__':
-    for i in range (1000):
+    for i in range (1):
         sim = Simulator()
         sim.init_world(2, 5, 5, 15, 15, 2)
         print(sim.env)

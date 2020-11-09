@@ -117,6 +117,7 @@ class Child (Agent):
     
     def do_action(self, env):
         do = self.move(env)
+        env.generate_dirt(self)
        
 class SmartRobot(Robot):
     FIND  = "F"

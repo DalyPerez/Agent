@@ -293,7 +293,7 @@ class Environment:
             p_cell = self.get_position(p)
             if p_cell.is_full() and isinstance(p_cell.obj, Child):
                 count += 1
-        return count
+        return count + 1
 
     def empty_neighbors(self, neighbors):
         positions = []
@@ -304,11 +304,22 @@ class Environment:
         return positions
 
     def generate_dirt(self, child):
-        neighbors = self.get_all_neighbors(child.pos)
+        neighbors = self.get_all_neighbors(child.position)
         empty = self.empty_neighbors(neighbors)
         childs_count = self.childs_in_quadrant(neighbors)
-        to_dirt = random.Random().sample(empty, childs_count)
-        for p in to_dirt:
+
+        if childs_count == 2:
+            max_to_dirt = 3
+        elif childs_count > 3:
+            max_to_dirt = 6
+        else:
+            max_to_dirt = 1
+        
+        r = random.Random()
+        to_dirt = r.randint(0, max_to_dirt)
+        cells_dirt = r.sample(set(empty), to_dirt)
+        print("Child ", child.name, "DIRT", cells_dirt)
+        for p in cells_dirt:
             p_cell = self.get_position(p)
             p_cell.set_dirty()
             self.dirty_cells += 1
@@ -322,13 +333,13 @@ class Environment:
         return s
 
 if __name__ == '__main__':
-    board = [['G', 'C3', 'E'], ['R', 'C1', 'D'], ['D', 'D', 'C2']]
+    board = [['G', 'E', 'E'], ['R', 'C1', 'D'], ['D', 'D', 'E']]
     env = Environment(2, 3, 3)
-    env.load_map(board)
+    b, childs = env.load_map(board)
     print(env)
-    ady = env.get_all_neighbors( (1, 2))
-    num_c = env.childs_in_quadrant(ady)
-    print(num_c)
+    c = childs['C1'] 
+    env.generate_dirt(c)
+    print(env)
   
     
 
