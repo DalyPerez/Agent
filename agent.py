@@ -111,6 +111,9 @@ class Child (Agent):
         new_pos = sum_positions(self.position, direction)
         print("Child", self.name,  " moved from position ", self.position, "to ", new_pos )
         env.move_child(self, direction)
+
+    def pollute(self, env):
+        env.generate_dirt(self)
     
     def do_action(self, env):
         do = self.move(env)

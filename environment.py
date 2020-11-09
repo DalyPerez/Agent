@@ -159,7 +159,7 @@ class Environment:
         self.time = self.time + 1
 
     def dirty_porcent(self):
-        return (self.dirty_cells * 100) / (self.N * self.M)
+        return (self.dirty_cells * 100) / self.total
 
     def all_childs_in_guard(self):
         # print(self.guards)
@@ -277,6 +277,42 @@ class Environment:
         guard_cell = self.get_position(p)
         guard_cell.clean()
         self.dirty_cells -= 1
+
+    def get_all_neighbors(self, pos):
+        ady = []
+        directions = [(-1,-1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+        for d in directions:
+            ady_p = sum_positions(pos, d)
+            if self.is_valid_position(ady_p):
+                ady.append(ady_p)
+        return ady
+
+    def childs_in_quadrant(self, positions):
+        count = 0
+        for p in positions:
+            p_cell = self.get_position(p)
+            if p_cell.is_full() and isinstance(p_cell.obj, Child):
+                count += 1
+        return count
+
+    def empty_neighbors(self, neighbors):
+        positions = []
+        for p in neighbors:
+            p_cell = self.get_position(p)
+            if p_cell.is_empty() and not p_cell.is_full():
+                positions.append(p)
+        return positions
+
+    def generate_dirt(self, child):
+        neighbors = self.get_all_neighbors(child.pos)
+        empty = self.empty_neighbors(neighbors)
+        childs_count = self.childs_in_quadrant(neighbors)
+        to_dirt = random.Random().sample(empty, childs_count)
+        for p in to_dirt:
+            p_cell = self.get_position(p)
+            p_cell.set_dirty()
+            self.dirty_cells += 1
+        
         
 
     def __str__(self):
@@ -286,12 +322,15 @@ class Environment:
         return s
 
 if __name__ == '__main__':
-    board = [['D'], ['R'], ['D'], ['O'], ['E']]
-    env = Environment(2, 5, 5)
-    env.create_map(5, 5, 5, 5, 8)
+    board = [['G', 'C3', 'E'], ['R', 'C1', 'D'], ['D', 'D', 'C2']]
+    env = Environment(2, 3, 3)
+    env.load_map(board)
     print(env)
-    print(env.dirty_porcent())
-    # print(env.robot_CanMove((1, 0), (1, 0)))
+    ady = env.get_all_neighbors( (1, 2))
+    num_c = env.childs_in_quadrant(ady)
+    print(num_c)
+  
+    
 
 
 
