@@ -15,13 +15,14 @@ class Simulator:
         self.bot, self.childs = self.env.create_map(N, M, dirty_porcent, obstacle_porcent, num_childs)
         
     def end_simulation(self):
-        if self.iter == 100 or self.env.dirty_porcent() == 60 or (self.env.dirty_porcent() == 100 and self.env.all_childs_in_guard()):
+        if self.iter == 100 or self.env.dirty_porcent() >= 60 or (self.env.dirty_porcent() == 0 and self.env.all_childs_in_guard()):
             return True
         return False
 
     def run(self):
         while (not self.end_simulation()):
             print("---Iteration #", self.iter, "---")
+            print("all_childs_in_guard: ", self.env.all_childs_in_guard())
             print("-> Bot Turn")
             self.bot.do_action(self.env)
             print("-> Childs turn")
@@ -30,11 +31,14 @@ class Simulator:
                     c.do_action(self.env)
             self.iter = self.iter + 1
             print(self.env)
+            # input()
+        return self.end_simulation()
          
 
 if __name__ == '__main__':
-    sim = Simulator()
-    sim.init_world(2, 5, 5, 15, 15, 1)
-    print(sim.env)
-    print("START SIMULATION")
-    sim.run()
+    for i in range (1000):
+        sim = Simulator()
+        sim.init_world(2, 5, 5, 15, 15, 2)
+        print(sim.env)
+        print("START SIMULATION")
+        sim.run()

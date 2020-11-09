@@ -38,7 +38,7 @@ class Robot (Agent):
         self.child_carried = None
         super(Robot, self).__init__("R ", position)
 
-    def is_full(self):
+    def has_child(self):
         return self.child_carried != None
 
     def posible_movements(self, env):
@@ -46,7 +46,7 @@ class Robot (Agent):
         choices = []
         for p in ady:
             direction = rest_positions(p, self.position)
-            if env.robot_CanMove(self.position, direction):
+            if env.robot_CanMove(self, self.position, direction):
                 choices.append(direction)
         return choices
     
@@ -56,7 +56,7 @@ class Robot (Agent):
         return r.choice(posible_choices)
 
     def move(self, env):
-        posible_step = [1, 2] if self.is_full() else [1]
+        posible_step = [1, 2] if self.has_child() else [1]
         step = rnd.choice(posible_step)
         for _ in range(step):
             direction = self.select_direction(env)
@@ -64,8 +64,6 @@ class Robot (Agent):
             print("Bot moved from position ", self.position, "to ", new_pos )
             env.move_robot(self, direction)
           
-        
-
     def drop_child(self, env):
         print("Bot drop child ", self.child_carried.name)
         guard_cell = env.get_position(self.position)
@@ -74,15 +72,14 @@ class Robot (Agent):
 
     def clean_cell(self, env):
         print("Bot clean cell ", self.position)
-        guard_cell = env.get_position(self.position)
-        guard_cell.clean()
+        env.clean(self.position)
 
     def do_action(self, env):
         bot_cell = env.get_position(self.position)
         posible_action = [ self.move ]
         if bot_cell.is_dirty():
             posible_action.append(self.clean_cell)
-        if self.is_full() and bot_cell.is_guard():
+        if self.has_child() and bot_cell.is_guard():
             posible_action.append(self.drop_child)
         action = rnd.choice(posible_action)
         return action(env)
@@ -104,6 +101,8 @@ class Child (Agent):
     
     def select_direction(self, env):
         posible_choices = self.posible_movements(env)
+        if len(posible_choices) == 0:
+            posible_choices = [(0, 0)]
         r = random.Random()
         return r.choice(posible_choices)
 
@@ -116,6 +115,62 @@ class Child (Agent):
     def do_action(self, env):
         do = self.move(env)
        
+class SmartRobot(Robot):
+    FIND  = "F"
+    SAVE  = "S"
+    ClEAN = "C"
+    def __init__(self, position, estrategy = None):
+        super(SmartRobot, self).__init__(position, estrategy)
+        self.state = SmartRobot.FIND
+    
+    def select_direction(self, env):
+        print ('select direction from smart robot')
+        f = None
+        if self.state == SmartRobot.ClEAN:
+            print('cleaning')
+            f = lambda x: x.is_dirty()
+        elif self.state == SmartRobot.SAVE:
+            print('saving a boy')
+            f = lambda x: x.is_guard() and (not x.is_full())
+        else:
+            print ('finding a boy')
+            f = lambda x : x.is_full() and isinstance(x.obj, Child) and not x.is_guard()
+        d = bfs(env, self.position[0], self.position[1], self, f)
+        if d == None:
+            posible_choices = self.posible_movements(env)
+            if len(posible_choices) == 0:
+                posible_choices = [(0, 0)]
+            d = rnd.choice(posible_choices)
+        return d
+
+    def move(self, env):
+        step = 2 if self.has_child() else 1
+        for _ in range(step):
+            direction = self.select_direction(env)
+            new_pos = sum_positions(self.position, direction)
+            print("Bot moved from position ", self.position, "to ", new_pos )
+            env.move_robot(self, direction)
+            if env.get_position(new_pos).is_guard():
+                break
+
+    def do_action(self, env):
+        if env.all_childs_in_guard():
+            self.state = SmartRobot.ClEAN
+        elif self.has_child():
+            self.state = SmartRobot.SAVE
+        else:
+            self.state = SmartRobot.FIND
+        bot_cell = env.get_position(self.position)
+        posible_action = []
+        if not (self.state == SmartRobot.ClEAN and bot_cell.is_dirty()):
+            posible_action.append(self.move)
+        if (not self.state == SmartRobot.SAVE) and bot_cell.is_dirty():
+            posible_action.append(self.clean_cell)
+        if self.state == SmartRobot.SAVE and bot_cell.is_guard():
+            posible_action = [self.drop_child]
+        action = rnd.choice(posible_action)
+        return action(env)
+    
 
    
 

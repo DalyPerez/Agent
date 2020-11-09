@@ -1,5 +1,5 @@
 import random
-from agent import Agent, Child, Robot, North, South, East, West
+from agent import Agent, Child, Robot, SmartRobot, North, South, East, West
 from tools import *
 
 ######## Env set ########
@@ -8,6 +8,8 @@ EMPTY    = "E"
 DIRTY    = "D"
 OBSTACLE = "O"
 
+
+    
 class Cell:
     def __init__(self, i, j, floor):
         self.floor = floor
@@ -60,7 +62,6 @@ class Environment:
         self.M = M
         self.dirty_cells = 0
         self.guards = []
- 
 
     def create_map(self, N, M, dirty_porcent, obstacle_porcent, num_childs):
         self.dirty_cells = num_of_dirty = int(self.total * dirty_porcent * 0.01)
@@ -72,6 +73,7 @@ class Environment:
 
         # guard cell
         guard_cell = set(self.ubicate_guard(num_childs, N))
+        self.guards = guard_cell
         cell = cell.difference(guard_cell)
         
         # dirty cell
@@ -104,7 +106,7 @@ class Environment:
         
         # set robot position
         bot_pos = r.sample(cell, 1)[0]
-        bot = Robot(bot_pos, None)
+        bot = SmartRobot(bot_pos, None)
         self.get_position(bot_pos).acquire(bot)
 
         return bot, childs
@@ -157,14 +159,15 @@ class Environment:
         self.time = self.time + 1
 
     def dirty_porcent(self):
-        return int((self.dirty_cells * 100) / (self.N * self.M))
+        return (self.dirty_cells * 100) / (self.N * self.M)
 
     def all_childs_in_guard(self):
-        for pos in self.guard:
+        # print(self.guards)
+        for pos in self.guards:
             guard_cell = self.get_position(pos)
-            if not (guard_cell.is_full() and isinstance(guard_cell.obj, Child)):
+            if (not guard_cell.is_full()) or (not isinstance(guard_cell.obj, Child)):
                 return False
-            return Trues
+        return True
 
 
 
@@ -188,13 +191,23 @@ class Environment:
                 ady.append(p)
         return ady
 
-    def robot_CanMove(self, p, direction):
+    def robot_CanMove(self, bot, p, direction):
         new_pos = sum_positions(p, direction)
-        bot = self.get_position(p).obj
         if self.is_valid_position(new_pos):
             cell = self.get_position(new_pos)
             # not move if the cell contain an obstacle or is a guard with child or is a child and the bot have another child 
-            if cell.is_obstacle() or (cell.is_full() and (cell.is_guard() or bot.is_full())):
+            if cell.is_obstacle() or (cell.is_full() and (cell.is_guard() or bot.has_child())):
+                return False
+            return True
+        return False
+
+    def robot_CanMoveAnyWhere(self, bot, p, other):
+        # Parche here TODO::::OJO
+        new_pos = other
+        if self.is_valid_position(new_pos):
+            cell = self.get_position(new_pos)
+            # not move if the cell contain an obstacle or is a guard with child or is a child and the bot have another child 
+            if cell.is_obstacle() or (cell.is_full() and (cell.is_guard() or bot.has_child())):
                 return False
             return True
         return False
@@ -215,7 +228,7 @@ class Environment:
             bot_cell.release()
         bot.change_position(direction)
         
-        if bot.is_full():
+        if bot.has_child():
             bot.child_carried.update_location(bot.position)
         new_cell = self.get_position(bot.position)
         
@@ -225,13 +238,12 @@ class Environment:
 
         new_cell.acquire(bot)
 
-    
     def move_child(self, child, direction):
         child_cell = self.get_position(child.position)
         new_cell = self.get_position(sum_positions(child.position, direction))
         if new_cell.is_guard(): #if child go to guard => this child disable their actions 
             child.is_active = False
-        if new_cell.is_empty():
+        if new_cell.is_empty() and not new_cell.is_full():
             child_cell.release()
             child.change_position(direction)
             new_cell.acquire(child)
@@ -240,7 +252,7 @@ class Environment:
             next_p = sum_positions(new_cell.p, direction)
             while self.is_valid_position(next_p):
                 next_cell = self.get_position(next_p)
-                if next_cell.is_empty():
+                if next_cell.is_empty() and not next_cell.is_full():
                     can_push = True
                     break
                 elif next_cell.is_obstacle():
@@ -261,6 +273,12 @@ class Environment:
                         break
                     next_p = sum_positions(last_cell.p, direction)
 
+    def clean(self, p):
+        guard_cell = self.get_position(p)
+        guard_cell.clean()
+        self.dirty_cells -= 1
+        
+
     def __str__(self):
         s = ""
         for i in range(self.N):
@@ -273,7 +291,7 @@ if __name__ == '__main__':
     env.create_map(5, 5, 5, 5, 8)
     print(env)
     print(env.dirty_porcent())
-    print(env.robot_CanMove((1, 0), (1, 0)))
+    # print(env.robot_CanMove((1, 0), (1, 0)))
 
 
 
