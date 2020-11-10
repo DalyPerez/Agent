@@ -2,8 +2,7 @@ from environment import *
 
 class Simulator:
     def __init__(self):
-        self.t = 0
-        self.turn = 0
+        self.t = None
         self.iter = 0
         self.env = None
         self.bot = None
@@ -22,13 +21,18 @@ class Simulator:
     def run(self):
         while (not self.end_simulation()):
             print("---Iteration #", self.iter, "---")
-            print("all_childs_in_guard: ", self.env.all_childs_in_guard())
+            
             print("-> Bot Turn")
             self.bot.do_action(self.env)
+            
             print("-> Childs turn")
             for c in self.childs.values():
                 if c.is_active:
                     c.do_action(self.env)
+
+            if (self.iter % self.t) == 0:
+                env.
+
             self.iter = self.iter + 1
             print(self.env)
             # input()
