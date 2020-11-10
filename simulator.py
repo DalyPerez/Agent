@@ -31,14 +31,14 @@ class Simulator:
                     c.do_action(self.env)
             self.iter = self.iter + 1
             print(self.env)
-            input()
+            # input()
         return self.end_simulation()
          
 
 if __name__ == '__main__':
-    for i in range (1):
+    for i in range (100):
         sim = Simulator()
-        sim.init_world(2, 5, 5, 15, 15, 2)
+        sim.init_world(2, 5, 5, 10, 10, 4)
         print(sim.env)
         print("START SIMULATION")
         sim.run()

@@ -1,3 +1,9 @@
+### Directions ###
+North = (-1, 0)
+South = (1, 0)
+East  = (0, 1)
+West  = (0, -1)
+
 def sum_positions(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
@@ -39,3 +45,7 @@ def bfs(env, i, j, bot, final_func):
         target = pi[target]
     return rest_positions(target, (i, j))
         
+
+
+
+

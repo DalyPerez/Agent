@@ -7,8 +7,6 @@ GUARD    = "G"
 EMPTY    = "E"
 DIRTY    = "D"
 OBSTACLE = "O"
-
-
     
 class Cell:
     def __init__(self, i, j, floor):
@@ -72,7 +70,10 @@ class Environment:
         cell = set([(i,j) for i in range(N) for j in range(M)])
 
         # guard cell
-        guard_cell = set(self.ubicate_guard(num_childs, N))
+        guard_cell = []
+        self.consecutive_guards(r.choice(range(N)), r.choice(range(M)), num_childs, guard_cell )
+        print(guard_cell)
+        # guard_cell = set(self.ubicate_guard(num_childs, N))
         self.guards = guard_cell
         cell = cell.difference(guard_cell)
         
@@ -154,6 +155,24 @@ class Environment:
                    direction = (0, 1)
             current_pos = sum_positions(current_pos, direction)
         return positions 
+
+    def consecutive_guards(self, x, y, cant_childs, guards):
+        if cant_childs == 0:
+            return True
+
+        guards.append((x, y))
+        self.map[x][y] = Cell(x, y, 'G')
+        possible = []
+        for d in [North, South, East, West]:
+            p = sum_positions((x, y), d)
+            if self.is_valid_position(p):
+                possible.append(p)
+        r = random.Random()
+        r.shuffle(possible)
+        for p in possible:
+            if self.consecutive_guards(p[0], p[1], cant_childs - 1, guards):
+                return True
+        return False
 
     def inc_time(self):
         self.time = self.time + 1
@@ -316,7 +335,7 @@ class Environment:
             max_to_dirt = 1
         
         r = random.Random()
-        to_dirt = r.randint(0, max_to_dirt)
+        to_dirt = min(r.randint(0, max_to_dirt), len(empty))
         cells_dirt = r.sample(set(empty), to_dirt)
         print("Child ", child.name, "DIRT", cells_dirt)
         for p in cells_dirt:
@@ -334,11 +353,12 @@ class Environment:
 
 if __name__ == '__main__':
     board = [['G', 'E', 'E'], ['R', 'C1', 'D'], ['D', 'D', 'E']]
-    env = Environment(2, 3, 3)
-    b, childs = env.load_map(board)
-    print(env)
-    c = childs['C1'] 
-    env.generate_dirt(c)
+    env = Environment(2, 10, 10)
+    env.create_map(10, 10, 20 , 20, 10)
+    # b, childs = env.load_map(board)
+    # print(env)
+    # c = childs['C1'] 
+    # env.generate_dirt(c)
     print(env)
   
     

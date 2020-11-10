@@ -3,12 +3,6 @@ from tools import *
 
 rnd = random.Random()
 
-### Directions ###
-North = (-1, 0)
-South = (1, 0)
-East  = (0, 1)
-West  = (0, -1)
-
 class Agent:
     def __init__(self, name, position):
         self.name = name
