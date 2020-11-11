@@ -69,7 +69,7 @@ class Simulator:
             self.iter = self.iter + 1
             print(self.env)
             # input()
-        return self.end_simulation()
+        # return self.end_simulation()
          
 def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs):
     s = Simulator()
@@ -83,8 +83,8 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs):
     print("number of stop in iteration 100 : ", s.statistics["STOP"])
     print("number of goal accomplished: ", s.statistics["DONE"])
     print("average percentage of dirt: ", s.statistics["DIRTY"] / iterations)
-    print("tests", s.tests)
+    
     
 
 if __name__ == '__main__':
-    simulate(20, 50, 5, 5, 10, 10, 4)
+    simulate(100, 50, 5, 5, 10, 10, 4)

@@ -1,5 +1,5 @@
 import random
-from agent import Agent, Child, Robot, SmartRobot, North, South, East, West
+from agent import Agent, Child, Robot, ProtectRobot, North, South, East, West
 from tools import *
 
 ######## Env set ########
@@ -104,7 +104,7 @@ class Environment:
         
         # set robot position
         bot_pos = r.sample(cell, 1)[0]
-        bot = SmartRobot(bot_pos, None)
+        bot = ProtectRobot(bot_pos)
         self.get_position(bot_pos).acquire(bot)
 
         return bot, childs
@@ -171,7 +171,7 @@ class Environment:
             self.get_position(pos).acquire(c)
 
         # set bot to the map 
-        bot = SmartRobot(bot_position, None)
+        bot = ProtectRobot(bot_position)
         if bot_has_child:
             c = Child(f'C{len(self.guards)}', bot_position)
             bot.child_carried = c
@@ -199,7 +199,7 @@ class Environment:
                     cell = Cell(i, j, GUARD)
                 elif item == 'R':
                     cell = Cell(i, j, EMPTY)
-                    bot = Robot((i, j), None)
+                    bot = Robot((i, j))
                     cell.acquire(bot)
                 else:
                     cell = Cell(i, j, EMPTY)
