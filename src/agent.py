@@ -28,8 +28,10 @@ class Agent:
 
 class Robot (Agent):
     FIND  = "F"
-    SAVE  = "S"
     ClEAN = "C"
+    SAVE  = "S"
+   
+
     def __init__(self, position):
         self.child_carried = None
         super(Robot, self).__init__("R ", position)
@@ -79,7 +81,6 @@ class Robot (Agent):
             posible_action.append(self.drop_child)
         action = rnd.choice(posible_action)
         return action(env)
-
 
 class Child (Agent):
     def __init__(self, name, position):
@@ -208,10 +209,12 @@ class CleanerRobot(Robot):
                 break
 
     def do_action(self, env):
+        print(Robot.SAVE)
+        print(Robot.CLEAN)
         if self.has_child():
             self.state = Robot.SAVE
         else:
-            self.state = Robot.CLEAN
+            self.state = Robot.ClEAN
         bot_cell = env.get_position(self.position)
         action = None
         if not (self.state == Robot.ClEAN and bot_cell.is_dirty()):

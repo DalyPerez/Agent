@@ -1,7 +1,8 @@
 \babel@toc {spanish}{}
 \babel@toc {spanish}{}
 \contentsline {section}{\numberline {1}Principales Ideas para la soluci\'on}{3}
-\contentsline {section}{\numberline {2}Modelos de Agentes}{3}
-\contentsline {section}{\numberline {3}Ideas seguidas para la implementaci\'on}{3}
-\contentsline {section}{\numberline {4}Simulaciones}{3}
-\contentsline {subsection}{\numberline {4.1}Conclusiones}{3}
+\contentsline {section}{\numberline {2}Modelos de Agentes}{4}
+\contentsline {subsection}{\numberline {2.1}Agente ProtectRobot}{5}
+\contentsline {section}{\numberline {3}Ideas seguidas para la implementaci\'on}{5}
+\contentsline {section}{\numberline {4}Simulaciones}{5}
+\contentsline {subsection}{\numberline {4.1}Conclusiones}{5}

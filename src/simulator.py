@@ -1,4 +1,5 @@
 from environment import *
+from agent import CleanerRobot, ProtectRobot
 
 class Simulator:
     def __init__(self):
@@ -9,7 +10,7 @@ class Simulator:
         self.childs = {}
         self.statistics = {"STOP": 0, "FIRE": 0, "DONE": 0, "DIRTY": 0}
 
-    def init_world(self, t, N, M, dirty_porcent, obstacle_porcent, num_childs):
+    def init_world(self, t, N, M, dirty_porcent, obstacle_porcent, num_childs, bot_type):
         self.t = t
         self.iter = 0
         self.env = Environment(t, N, M)
@@ -17,8 +18,9 @@ class Simulator:
         num_of_obs = int(N * M * obstacle_porcent * 0.01)
         r = random.Random()
         bot_pos = (r.choice(range(N)), r.choice(range(M)))
+        bot = bot_type(bot_pos)
         
-        self.bot, self.childs = self.env.restart_map(N, M, bot_pos, False, num_of_dirty, num_of_obs, num_childs, 0 )
+        self.bot, self.childs = self.env.restart_map(N, M, bot, False, num_of_dirty, num_of_obs, num_childs, 0 )
     
     def random_variation_world(self):
         self.bot, self.childs = self.env.random_variation(self.bot.position)
@@ -71,10 +73,10 @@ class Simulator:
             # input()
         # return self.end_simulation()
          
-def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs):
+def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type):
     s = Simulator()
     for i in range(iterations):
-        s.init_world(t, N, M, dirty_porcent, obst_porcent, num_childs)
+        s.init_world(t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type)
         print(s.env)
         print("START SIMULATION : ", i)
         s.run()
@@ -87,4 +89,5 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs):
     
 
 if __name__ == '__main__':
-    simulate(100, 50, 5, 5, 10, 10, 4)
+    bot_type = CleanerRobot
+    simulate(1, 50, 5, 5, 10, 10, 4, bot_type)
