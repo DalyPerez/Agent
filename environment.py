@@ -54,16 +54,16 @@ class Environment:
     def __init__(self, t, N, M):
         self.t = t
         self.map = [[None for j in range(M)] for i in range(N)]
-        self.turn = 0
         self.total = N * M
         self.N = N
         self.M = M
         self.dirty_cells = 0
+        self.obst_cells = 0
         self.guards = []
 
     def create_map(self, N, M, dirty_porcent, obstacle_porcent, num_childs):
         self.dirty_cells = num_of_dirty = int(self.total * dirty_porcent * 0.01)
-        num_of_obs = int(self.total * obstacle_porcent * 0.01)
+        self.obst_cells = num_of_obs = int(self.total * obstacle_porcent * 0.01)
         r = random.Random()
         
         # set cell for creation map
@@ -105,6 +105,76 @@ class Environment:
         bot_pos = r.sample(cell, 1)[0]
         bot = SmartRobot(bot_pos, None)
         self.get_position(bot_pos).acquire(bot)
+
+        return bot, childs
+
+    def restart_map(self, N, M, bot_position, bot_has_child, num_of_dirty, num_of_obst, num_childs, childs_in_guard):
+        r = random.Random()
+        self.guards = []
+        self.dirty_cells = num_of_dirty
+        self.obst_cells = num_of_obst
+        
+        # set cells for creation map
+        cell = set([(i,j) for i in range(N) for j in range(M)])
+        cell = cell.difference([bot_position])
+
+        # ubicate guards
+        first_guard = r.sample(cell, 1)[0]
+        self.consecutive_guards(first_guard[0], first_guard[1], num_childs, self.guards, bot_position )
+        cell = cell.difference(self.guards)
+
+        # select the guards with childs
+        guards_with_childs = []
+        for c in range(childs_in_guard):
+            child_cell = self.guards[c]
+            guards_with_childs.append(child_cell)
+
+        # dirty cell
+        dirty_cell = r.sample(cell, num_of_dirty)
+        cell = cell.difference(dirty_cell)
+
+        # obs cell
+        obs_cell = r.sample(cell, num_of_obst)
+        cell = cell.difference(obs_cell)
+
+        # create cells for each type
+        types = [EMPTY, DIRTY, OBSTACLE, GUARD, EMPTY]
+        creation_cell = [cell, dirty_cell, obs_cell, self.guards, [bot_position]]
+        for i in range(len(types)):
+            for p in creation_cell[i]:
+                x, y = p
+                self.map[x][y] = Cell(x, y, types[i])
+
+        # set childs to the guards
+        i = 0
+        childs = {}
+        for p in guards_with_childs:
+            name = f'C{i}' 
+            i += 1
+            c = Child(name, p)
+            self.get_position(p).acquire(c)
+            childs[name] = c
+
+        # set child location
+        rest_childs = num_childs - childs_in_guard
+        if bot_has_child:
+            rest_childs -= 1
+        childs_pos = r.sample(cell, rest_childs)
+        cell = cell.difference(childs_pos)
+
+        for j in range(rest_childs):
+            name = f'C{i + j}' 
+            pos = childs_pos[j]
+            c = Child(name, pos)
+            childs[name] = c
+            self.get_position(pos).acquire(c)
+
+        # set bot to the map 
+        bot = SmartRobot(bot_position, None)
+        if bot_has_child:
+            c = Child(f'C{len(self.guards)}', bot_position)
+            bot.child_carried = c
+        self.get_position(bot_position).acquire(bot)
 
         return bot, childs
 
@@ -152,24 +222,26 @@ class Environment:
             current_pos = sum_positions(current_pos, direction)
         return positions 
 
-    def consecutive_guards(self, x, y, cant_childs, guards):
-        if cant_childs == 0:
-            return True
-
+    def consecutive_guards(self, x, y, cant_childs, guards, bot_pos):
         guards.append((x, y))
-        self.map[x][y] = Cell(x, y, 'G')
+        if cant_childs == 1:
+            return 1
+        cant_childs -= 1
         possible = []
         for d in [North, South, East, West]:
             p = sum_positions((x, y), d)
-            if self.is_valid_position(p):
+            if self.is_valid_position(p) and not (p in guards) and p != bot_pos:
                 possible.append(p)
         r = random.Random()
         r.shuffle(possible)
+        solve = 1
         for p in possible:
-            if self.consecutive_guards(p[0], p[1], cant_childs - 1, guards):
-                return True
-        return False
-
+            c = self.consecutive_guards(p[0], p[1], cant_childs, guards, bot_pos)
+            cant_childs -= c
+            solve += c
+            if cant_childs == 0: break
+        return solve
+        
     def dirty_porcent(self):
         return (self.dirty_cells * 100) / self.total
 
@@ -200,9 +272,17 @@ class Environment:
                 return False
         return True
 
+    def cant_childs_in_guards(self):
+        count = 0
+        for pos in self.guards:
+            guard_cell = self.get_position(pos)
+            if guard_cell.is_full() and isinstance(guard_cell.obj, Child):
+                count += 1
+        return count
+
     def robot_CanMove(self, bot, p, direction):
         new_pos = sum_positions(p, direction)
-        return self.robot_CanMoveAnyWhere(bot, bot, p, new_pos)
+        return self.robot_CanMoveAnyWhere(bot, p, new_pos)
 
     def robot_CanMoveAnyWhere(self, bot, p, new_pos):
         if self.is_valid_position(new_pos):
@@ -324,8 +404,14 @@ class Environment:
             p_cell = self.get_position(p)
             p_cell.set_dirty()
             self.dirty_cells += 1
-        
-    # def 
+      
+    def random_variation(self, bot_position):
+        bot_cell = self.get_position(bot_position)
+        bot_has_child = False
+        if isinstance(bot_cell.obj, Robot) and bot_cell.obj.has_child():
+            bot_has_child = True
+        bot, childs = self.restart_map(self.N, self.M, bot_position, bot_has_child, self.dirty_cells, self.obst_cells, len(self.guards), self.cant_childs_in_guards() )
+        return bot, childs
 
     def __str__(self):
         s = ""
@@ -334,13 +420,17 @@ class Environment:
         return s
 
 if __name__ == '__main__':
+    r = random.Random()
     board = [['G', 'E', 'E'], ['R', 'C1', 'D'], ['D', 'D', 'E']]
-    env = Environment(2, 10, 10)
-    env.create_map(10, 10, 20 , 20, 10)
-    # b, childs = env.load_map(board)
-    # print(env)
-    # c = childs['C1'] 
-    # env.generate_dirt(c)
+    N = 5
+    M = 5
+    t = 10
+    env = Environment(t, N, M)
+    bot_pos = (r.choice(range(N)), r.choice(range(M)))
+    env.restart_map(N, M, bot_pos, False, 3, 3, 4, 2 )
+    print(env)
+  
+    env.random_variation(bot_pos)
     print(env)
   
     
