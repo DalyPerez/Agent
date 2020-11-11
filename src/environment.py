@@ -60,6 +60,7 @@ class Environment:
         self.dirty_cells = 0
         self.obst_cells = 0
         self.guards = []
+        self.final_state = None
 
     def create_map(self, N, M, dirty_porcent, obstacle_porcent, num_childs):
         self.dirty_cells = num_of_dirty = int(self.total * dirty_porcent * 0.01)

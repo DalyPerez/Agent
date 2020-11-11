@@ -7,9 +7,11 @@ class Simulator:
         self.env = None
         self.bot = None
         self.childs = {}
+        self.statistics = {"STOP": 0, "FIRE": 0, "DONE": 0, "DIRTY": 0}
 
     def init_world(self, t, N, M, dirty_porcent, obstacle_porcent, num_childs):
         self.t = t
+        self.iter = 0
         self.env = Environment(t, N, M)
         num_of_dirty = int(N * M * dirty_porcent * 0.01)
         num_of_obs = int(N * M * obstacle_porcent * 0.01)
@@ -22,13 +24,29 @@ class Simulator:
         self.bot, self.childs = self.env.random_variation(self.bot.position)
 
     def end_simulation(self):
-        if self.iter == 100 or self.env.dirty_porcent() >= 60 or (self.env.dirty_porcent() == 0 and self.env.all_childs_in_guard()):
+        if self.iter == 100:
+            self.env.final_state = "STOP"
+            self.statistics["STOP"] += 1
+            self.statistics["DIRTY"] += self.env.dirty_porcent()
+            return True
+        elif self.env.dirty_porcent() >= 60:
+            self.env.final_state = "FIRE"
+            self.statistics["FIRE"] += 1
+            self.statistics["DIRTY"] += self.env.dirty_porcent()
+            return True
+        elif self.env.dirty_porcent() == 0 and self.env.all_childs_in_guard():
+            self.env.final_state = "DONE"
+            self.statistics["DONE"] += 1
+            self.statistics["DIRTY"] += self.env.dirty_porcent()
             return True
         return False
 
     def run(self):
         while (True):
             if self.end_simulation():
+                print(self.env.final_state)
+                print(self.statistics)
+                # input()
                 break
             print("---Iteration #", self.iter, "---")
             
@@ -41,10 +59,9 @@ class Simulator:
                     c.do_action(self.env)
             
 
-            if (self.iter % self.t) == 0:
+            if ((self.iter + 1) % self.t ) == 0:
                 print("-------------Random Variation----------")
                 print(self.env)
-                # input()
                 self.random_variation_world()
                 print(self.env)
                 # input()
@@ -54,13 +71,20 @@ class Simulator:
             # input()
         return self.end_simulation()
          
-    def simulate(self):
-        pass
+def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs):
+    s = Simulator()
+    for i in range(iterations):
+        s.init_world(t, N, M, dirty_porcent, obst_porcent, num_childs)
+        print(s.env)
+        print("START SIMULATION : ", i)
+        s.run()
+    "------------------SIMULATION RESULTS----------------"
+    print("number of layoffs: ", s.statistics["FIRE"])
+    print("number of stop in iteration 100 : ", s.statistics["STOP"])
+    print("number of goal accomplished: ", s.statistics["DONE"])
+    print("average percentage of dirt: ", s.statistics["DIRTY"] / iterations)
+    print("tests", s.tests)
+    
 
 if __name__ == '__main__':
-    for i in range (100):
-        sim = Simulator()
-        sim.init_world(40, 5, 5, 10, 10, 2)
-        print(sim.env)
-        print("START SIMULATION")
-        sim.run()
+    simulate(20, 50, 5, 5, 10, 10, 4)
