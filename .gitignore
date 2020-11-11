@@ -128,10 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.pyc
-.pdf
-.aux
-.log
-.gz
-.toc
-.png
+*.pyc
+*.pdf
+*.aux
+*.log
+*.gz
+*.toc
+*.png
