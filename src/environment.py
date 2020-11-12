@@ -62,7 +62,12 @@ class Environment:
         self.guards = []
         self.final_state = None
 
-    def restart_map(self, N, M, bot, bot_has_child, num_of_dirty, num_of_obst, num_childs, childs_in_guard):
+    def restart_map(self, N, M, bot, bot_has_child, bot_floor, num_of_dirty, num_of_obst, num_childs, childs_in_guard):
+        print("total:", N*M)
+        print("dirty:", num_of_dirty)
+        print("obst:", num_of_obst)
+        print("childs in guard:", childs_in_guard)
+        print("*******************************")
         r = random.Random()
         self.guards = []
         self.dirty_cells = num_of_dirty
@@ -71,11 +76,16 @@ class Environment:
         # set cells for creation map
         cell = set([(i,j) for i in range(N) for j in range(M)])
         cell = cell.difference([bot.position])
+        print("bot", len(cell))
 
         # ubicate guards
-        first_guard = r.sample(cell, 1)[0]
+        if bot_floor == GUARD:
+            first_guard = bot.position
+        else:
+            first_guard = r.sample(cell, 1)[0]
         self.consecutive_guards(first_guard[0], first_guard[1], num_childs, self.guards, bot.position )
         cell = cell.difference(self.guards)
+        print("guards", len(cell))
 
         # select the guards with childs
         guards_with_childs = []
@@ -84,20 +94,32 @@ class Environment:
             guards_with_childs.append(child_cell)
 
         # dirty cell
-        dirty_cell = r.sample(cell, num_of_dirty)
+        if bot_floor == DIRTY:
+            dirty_cell = r.sample(cell, num_of_dirty -1)
+            dirty_cell.append(bot.position)
+        else:
+            dirty_cell = r.sample(cell, num_of_dirty)
         cell = cell.difference(dirty_cell)
+        print("dirty", len(cell))
 
         # obs cell
         obs_cell = r.sample(cell, num_of_obst)
         cell = cell.difference(obs_cell)
+        print("obs", len(cell))
+
+        if bot_floor == EMPTY:
+            x, y = bot.position
+            self.map[x][y] = Cell(x, y, EMPTY)
 
         # create cells for each type
-        types = [EMPTY, DIRTY, OBSTACLE, GUARD, EMPTY]
-        creation_cell = [cell, dirty_cell, obs_cell, self.guards, [bot.position]]
+        types = [EMPTY, DIRTY, OBSTACLE, GUARD]
+        creation_cell = [cell, dirty_cell, obs_cell, self.guards]
         for i in range(len(types)):
             for p in creation_cell[i]:
                 x, y = p
                 self.map[x][y] = Cell(x, y, types[i])
+
+        print("after set", len(cell))
 
         # set childs to the guards
         i = 0
@@ -106,6 +128,7 @@ class Environment:
             name = f'C{i}' 
             i += 1
             c = Child(name, p)
+            c.is_active = False
             self.get_position(p).acquire(c)
             childs[name] = c
 
@@ -113,8 +136,11 @@ class Environment:
         rest_childs = num_childs - childs_in_guard
         if bot_has_child:
             rest_childs -= 1
+        print("cells emptys", len(cell), "childs to set:", rest_childs, "bot has child:", bot_has_child)
         childs_pos = r.sample(cell, rest_childs)
         cell = cell.difference(childs_pos)
+
+        print("cell", len(cell))
 
         for j in range(rest_childs):
             name = f'C{i + j}' 
@@ -358,19 +384,11 @@ class Environment:
             p_cell.set_dirty()
             self.dirty_cells += 1
       
-    def random_variation(self, bot_position):
-        bot_cell = self.get_position(bot_position)
-        bot_has_child = False
-        if isinstance(bot_cell.obj, Robot) and bot_cell.obj.has_child():
-            bot_has_child = True
-        if isinstance(bot_cell.obj, ProtectRobot):
-            bot_type = ProtectRobot
-        else:
-            print("44444444444444444444444444444444")
-            input()
-            bot_type = CleanerRobot
-        bot = bot_type(bot_position)
-        bot, childs = self.restart_map(self.N, self.M, bot, bot_has_child, self.dirty_cells, self.obst_cells, len(self.guards), self.cant_childs_in_guards() )
+    def random_variation(self, bot, has_child, bot_floor):
+        print("Guards:", self.guards)
+        print("Childs in guard", self.cant_childs_in_guards() )
+        bot, childs = self.restart_map(self.N, self.M, bot, has_child, bot_floor, self.dirty_cells, self.obst_cells, len(self.guards), self.cant_childs_in_guards() )
+        print("GUARDS AFTER VARIATION:",self.guards)
         return bot, childs
 
     def __str__(self):
@@ -386,11 +404,7 @@ if __name__ == '__main__':
     M = 5
     t = 10
     env = Environment(t, N, M)
-    bot_pos = (r.choice(range(N)), r.choice(range(M)))
-    env.restart_map(N, M, bot_pos, False, 3, 3, 4, 2 )
-    print(env)
   
-    env.random_variation(bot_pos)
     print(env)
   
     

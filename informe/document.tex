@@ -101,11 +101,15 @@ Respondiendo a las especificaciones del proyecto, se satisface que el ambiente s
 
 Tanto el robot de casa como los niños constituyen agentes mostrando su capacidad ejecutiva al poder modificar el medio en que habitan. Cada uno de ellos se especializa con su conjunto de acciones particular, quedando conformada la siguiente jerarquía: 
 
+  \begin{figure}[!ht]
+  	\centering
+  	\includegraphics[scale=0.6]{./image/robots.png}
+  	\caption{\small{Jerarquía de clases de agentes}}
+  \end{figure}  
+  
+  
+Se implementaron dos tipos de robot de casa: \textbf{ProtectRobot} el cual brinda más prioridad a guardar los niños en el corral y el robot \textbf{CleanerRobot} quien mantiene la casa lo más limpia posible y solo lleva a un niño al corral en caso de encontrarse con él. No obstante, el agente \textbf{Robot} de por sí, constituye un robot de casa que actúa aleatoriamente, seleccionando una acción a ejecutar entre todas las posibles. Como este último no se basa en una estrategia o política a seguir, los resultados del mismo no aportarán ningún tipo de información sobre su efectividad como robot de casa. Por tal motivo, solo se tendrán en cuenta los experimentos realizados con el \textit{ProtectRobot} y el \textit{CleanerRobot}.\\
 
-  PONER FOTO 
-  
-  
-Se implementaron dos tipos de robot de casa: \textbf{ProtectRobot} el cual brinda más prioridad a guardar los niños en el corral y el robot \textbf{CleanerRobot} quien mantiene la casa lo más limpia posible y solo lleva a un niño al corral en caso de encontrarse con él. 
   
  La simulación parte de una configuración inicial del ambiente:
  \begin{itemize}
@@ -116,7 +120,7 @@ Se implementaron dos tipos de robot de casa: \textbf{ProtectRobot} el cual brind
  	\item \lstinline|dirty_porcent|: porciento de casillas sucias. 
  	\item \lstinline|obst_porcent|: porciento de obstáculos a colocar.
  	\item \lstinline|num_childs| : cantidad de niños en el ambiente.
- 	\item  \lstinline|bot_type|: tipo de robot de casa(ProtectRobot, CleanerRobot).
+ 	\item  \lstinline|bot_type|: tipo de robot de casa(Robot, ProtectRobot, CleanerRobot).
  \end{itemize}
 
 Con esta información se genera un ambiente a través de la función \lstinline|restart_map| la cual además de los datos anteriores recibe al robot ya con una posición aleatoria. En un inicio solo está ubicado el robot, luego se pasa a ubicar el corral garantizando siempre que sus casillas estén dispuestas consecutivamente, posteriormente se van seleccionando las casillas sucias, los obstáculos y los niños, descartando en cada paso, las casillas seleccionadas en la repartición anterior. Se asegura además que los niños no caigan dentro del corral inicialmente y que los robot no comiencen cargando a un niño.
@@ -126,7 +130,7 @@ Con esta información se genera un ambiente a través de la función \lstinline|res
 
 Al estar en presencia de un ambiente dinámico, se decidió que los agentes fueran reactivos, ya que los eventos que ocurren en el ambiente pueden afectar los objetivos del agente o las suposiciones en las que se basa el proceso que el agente está ejecutando para lograr su objetivo. Por tanto el agente debe ser sensitivo a estos cambios. Por otro lado, ambos robots de casa en dependencia de su estado y el del ambiente pueden determinar cumplir un objetivo( encontrar un niño, llevar un niño al corral,...), es en este punto donde se manifiestan pequeños rasgos de pro-actividad.
 
-Los niños son agentes de tipo \textit{Child} y la única acción que realizan es moverse aleatoriamente a una de las direcciones posibles durante el turno del ambiente, una casilla a lo sumo, pues estos pueden decidir empujar a un obstáculo y que la acción no tenga efecto. Cada actuar de un niño trae consigo la genración de basura en la cuadícula del ambiente donde está contenido.
+Los niños son agentes de tipo \textit{Child} y la única acción que realizan es moverse aleatoriamente a una de las direcciones posibles durante el turno del ambiente, una casilla a lo sumo, pues estos pueden decidir empujar a un obstáculo y que la acción no tenga efecto. Cada actuar de un niño trae consigo la generación de basura en la cuadrícula del ambiente donde está contenido dicho niño.
 
 Los robots constituyen agentes con estados, pues su proceso de toma de decisión está basado en la percepción que necesitan captar del ambiente de acuerdo al estado interno actual del robot. El comportamiento de un robot es construido a partir de un número de conductas que él mismo puede asumir en dependencia de su estado. Los posibles estados de un robot son:
 \begin{itemize}
@@ -135,7 +139,7 @@ Los robots constituyen agentes con estados, pues su proceso de toma de decisión 
 	\item FIND: el robot se encuentra de camino al niño más cercano que no esté en un corral.
 \end{itemize}
 
-Tanto \textit{ProtectRobot} como \textit{CleanerRobot} tienden a priorizar más un objetivo por encima de otro, por tanto tendrán lugar conductas con mayor prioridad que otras. Importante aclarar que todos los agentes tienen las siguientes funcionalidades:
+Tanto \textit{ProtectRobot} como \textit{CleanerRobot} tienden a priorizar más un objetivo por encima de otro, por tanto tendrán lugar conductas con mayor prioridad que otras. Importante añadir que todos los agentes tienen las siguientes funcionalidades:
 \begin{itemize}
 	\item \lstinline|select_direction|: selecciona la dirección a donde se moverá posteriormente para alcanzar su objetivo actual.
 	
@@ -144,26 +148,95 @@ Tanto \textit{ProtectRobot} como \textit{CleanerRobot} tienden a priorizar más u
 	\item \lstinline|do_action|: actualiza el estado del robot según la percepción que captó del ambiente y del estado en que se encontraba el propio robot. Luego con esta información es que decide cuál acción ejecutar. En el caso de los niños, no hay estados y la única acción es moverse.
 \end{itemize}
 
+En el caso de los robots, además de la acción de moverse tienen otras dos acciones posibles:
+\begin{itemize}
+	\item \lstinline|drop_child|: suelta el niño que lleva cargando en la casilla donde está parado.
+	
+	\item \lstinline|clean_cell|: limpia la casilla donde está situado.
+\end{itemize}
+
+
+
+
  En las siguientes secciones se ejemplifica lo anterior con los modelos de agentes implementados.
 
 \subsection{Agente ProtectRobot}
-Como ya se mencionó, este robot prioriza llevar todos los niños al corral desde un inicio y cuando lo logre es que se mantiene limpiando la casa. Por defecto el estado de este robot es FIND, pues cuando comienza la simulación su primer objetivo es encontrar al niño más cercano. 
+Como ya se mencionó, este robot prioriza llevar todos los niños al corral desde un inicio y cuando lo logre es que se mantiene limpiando la casa. Por defecto el estado de este robot es FIND, pues cuando comienza la simulación su primer objetivo es encontrar al niño más cercano. En el siguiente esquema se muestran cada una de las conductas de este tipo de agente.
+
+\begin{lstlisting}
+def do_action(self, env):
+	"""
+	env: environment
+	"""
+	if env.all_childs_in_guard(): #ya guardó todos los niños
+		self.state = Robot.ClEAN
+	elif self.has_child(): #si tiene un niño se mueve hacia el corral
+		self.state = Robot.SAVE
+	else: #si no ha terminado de guardar los niños se mantiene buscando otro
+		self.state = Robot.FIND
+	bot_cell = env.get_position(self.position)
+	posible_action = []
+	
+	if self.state == Robot.SAVE and bot_cell.is_guard():  #conducta 1
+		posible_action.append(self.drop_child)
+	if (not self.state == Robot.SAVE) and bot_cell.is_dirty(): #conducta 2
+		posible_action.append(self.clean_cell)
+	if not (self.state == Robot.ClEAN and bot_cell.is_dirty()): #conducta 3
+		posible_action.append(self.move)
+	action = rnd.choice(posible_action)
+	return action(env)
+\end{lstlisting}
 
 
 
+\textbf{Conducta 1:} el robot se encuentra en el estado SAVE(cargando a un niño) y parado sobre un corral por tanto una posible acción a ejecutar es \lstinline|drop_child|. Notar que cuando se está en este estado no habrán otras posibles acciones, por lo que esa es la acción que se ejecuta.\\
 
+
+\textbf{Conducta 2:} el robot no está cargando niño y está sobre una casilla sucia, entonces la acción \lstinline|clean_cell| será una de las candidatas. Notar que si no está en estado SAVE, puede estar en estado CLEAN en el cual solo se limpian casillas o en estado FIND. En caso de estar en este último la acción a ejecutar puede ser moverse para acercarse al niño objetivo o limpiar la casilla actual. Ambas tendrían 50 \% de probabilidades.\\ 
+
+
+\textbf{Conducta 3:} el robot no está en estado CLEAN ni está parado sobre una casilla sucia, por tanto lo que hace es moverse. La dirección para la cual se moverá está determinada por el estado actual del robot, pues si es SAVE, se inclina hacia el corral más cercano, si es FIND se inclina hacia el niño más cercano y si es CLEAN se inclina hacia la casilla sucia más cercana.\\
+
+Finalmente se selecciona aleatoriamente la acción a ejecutar entre todas las posibles y en el único caso que podrían haber dos opciones es cuando el robot está en estado FIND parado sobre una casilla sucia, por lo que puede avanzar para alcanzar al niño o gastar la acción deteniéndose a limpiar. Nunca se decide limpiar una basura mientras el robot carga un niño, claramente le da más prioridad a guardar el niño.
+
+\subsection{Agente CleanerRobot}
+Este robot se preocupa más por la limpieza que por lograr tener todos los niños en el corral. La idea puede traer el inconveniente de que al tener la gran mayoría de los niños afuera, estos estén generando mayor cantidad de suciedad, la cual se acumulando y provocará rápidamente el despido del robot. Por tanto por mucho que limpie puede perder con más facilidad. Los robots de este tipo no estarán nunca en estado FIND, pues solo llevan a un niño al corral en caso de haber coincidido con ellos en la misma casilla. La función \lstinline|do_action| de este agente muestra cómo se actualizan sus estados y se decide la acción a ejecutar.
+
+\begin{lstlisting}
+def do_action(self, env):
+	"""
+	env: environment
+	"""
+	if self.has_child(): #si tiene un niño se mueve hacia el corral
+		self.state = Robot.SAVE
+	else: #se mantiene en estado CLEAN 
+		self.state = Robot.ClEAN
+	bot_cell = env.get_position(self.position)
+	action = None
+	if self.state == Robot.SAVE and bot_cell.is_guard(): #conducta 1
+		action = self.drop_child
+	if self.state == Robot.CLEAN and bot_cell.is_dirty(): #conducta 2
+		action = self.clean_cell
+	else:  #conducta 3
+		action = self.move
+	
+	return action(env)
+\end{lstlisting}
+
+
+\textbf{Conducta 1:} Igual que en el \textit{ProtectRobot} se encuentra en el estado SAVE(cargando a un niño) y parado sobre un corral por tanto una posible acción a ejecutar es \lstinline|drop_child|.\\
+
+\textbf{Conducta 2:} el robot está en estado CLEAN y situado sobre una casilla sucia por tanto su acción será limpiar.\\
+
+\textbf{Conducta 3:} Si no se presentan ninguna de las dos situaciones anteriores, las cuales son conducta con mayor prioridad, el robot se moverá hacia la dirección que se determine según su estado actual.
 
 
  
 
-
-
-
-
 \section{Ideas seguidas para la implementación}
 
 \section{Simulaciones}
-\subsection{Conclusiones}
+\section{Conclusiones}
 
 
 

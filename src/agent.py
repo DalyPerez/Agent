@@ -28,7 +28,7 @@ class Agent:
 
 class Robot (Agent):
     FIND  = "F"
-    ClEAN = "C"
+    CLEAN = "C"
     SAVE  = "S"
    
 
@@ -50,6 +50,8 @@ class Robot (Agent):
     
     def select_direction(self, env):
         posible_choices = self.posible_movements(env)
+        if len(posible_choices) == 0:
+            return (0, 0)
         r = random.Random()
         return r.choice(posible_choices)
 
@@ -127,7 +129,7 @@ class ProtectRobot(Robot):
     def select_direction(self, env):
         print ('select direction from protect robot')
         f = None
-        if self.state == Robot.ClEAN:
+        if self.state == Robot.CLEAN:
             print('cleaning')
             f = lambda x: x.is_dirty()
         elif self.state == Robot.SAVE:
@@ -155,21 +157,25 @@ class ProtectRobot(Robot):
                 break
 
     def do_action(self, env):
+        """
+        env: environment
+        """
         if env.all_childs_in_guard():
-            self.state = Robot.ClEAN
+            self.state = Robot.CLEAN
         elif self.has_child():
             self.state = Robot.SAVE
         else:
             self.state = Robot.FIND
         bot_cell = env.get_position(self.position)
         posible_action = []
-        action = None
-        if not (self.state == Robot.ClEAN and bot_cell.is_dirty()):
-            action = self.move
-        if (not self.state == Robot.SAVE) and bot_cell.is_dirty():
-            action = self.clean_cell
+
         if self.state == Robot.SAVE and bot_cell.is_guard():
-            action = self.drop_child
+            return self.drop_child(env)
+        if (not self.state == Robot.SAVE) and bot_cell.is_dirty():
+            posible_action.append(self.clean_cell)
+        if not (self.state == Robot.CLEAN and bot_cell.is_dirty()) :
+            posible_action.append(self.move)
+        action = rnd.choice(posible_action)
         return action(env)
     
 class CleanerRobot(Robot):
@@ -178,7 +184,7 @@ class CleanerRobot(Robot):
     """
     def __init__(self, position):
         super(CleanerRobot, self).__init__(position)
-        self.state = Robot.ClEAN
+        self.state = Robot.CLEAN
     
     def select_direction(self, env):
         print ('select direction from cleaner robot')
@@ -186,7 +192,7 @@ class CleanerRobot(Robot):
         if self.state == Robot.SAVE:
             print('saving a boy')
             f = lambda x: x.is_guard() and (not x.is_full())
-        elif self.state == Robot.ClEAN: # by default clean
+        elif self.state == Robot.CLEAN: # by default clean
             print('cleaning')
             f = lambda x: x.is_dirty()
         
@@ -209,20 +215,22 @@ class CleanerRobot(Robot):
                 break
 
     def do_action(self, env):
-        print(Robot.SAVE)
-        print(Robot.CLEAN)
+        """
+        env: environment
+        """
         if self.has_child():
             self.state = Robot.SAVE
         else:
-            self.state = Robot.ClEAN
+            self.state = Robot.CLEAN
         bot_cell = env.get_position(self.position)
         action = None
-        if not (self.state == Robot.ClEAN and bot_cell.is_dirty()):
-            action = self.move
-        if (not self.state == Robot.SAVE) and bot_cell.is_dirty():
-            action = self.clean_cell
         if self.state == Robot.SAVE and bot_cell.is_guard():
             action = self.drop_child
+        if self.state == Robot.CLEAN and bot_cell.is_dirty():
+            action = self.clean_cell
+        else: 
+            action = self.move
+
         return action(env)
     
 

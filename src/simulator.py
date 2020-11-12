@@ -14,16 +14,26 @@ class Simulator:
         self.t = t
         self.iter = 0
         self.env = Environment(t, N, M)
-        num_of_dirty = int(N * M * dirty_porcent * 0.01)
-        num_of_obs = int(N * M * obstacle_porcent * 0.01)
+        total = N * M - 2*num_childs - 1
+        num_of_dirty = int(total * dirty_porcent * 0.01)
+        num_of_obs = int(total * obstacle_porcent * 0.01)
         r = random.Random()
         bot_pos = (r.choice(range(N)), r.choice(range(M)))
         bot = bot_type(bot_pos)
         
-        self.bot, self.childs = self.env.restart_map(N, M, bot, False, num_of_dirty, num_of_obs, num_childs, 0 )
+        self.bot, self.childs = self.env.restart_map(N, M, bot, False, EMPTY, num_of_dirty, num_of_obs, num_childs, 0 )
     
     def random_variation_world(self):
-        self.bot, self.childs = self.env.random_variation(self.bot.position)
+        #info of the bot position
+        has_child = self.bot.has_child()
+        bot_floor = self.env.get_position(self.bot.position).floor
+        print("BOT INFO:" , has_child, bot_floor)
+        if isinstance(self.bot, ProtectRobot):
+            bot_type = ProtectRobot
+        else:
+            bot_type = CleanerRobot
+        bot = bot_type(self.bot.position)
+        self.bot, self.childs = self.env.random_variation(bot, has_child, bot_floor)
 
     def end_simulation(self):
         if self.iter == 100:
@@ -48,7 +58,6 @@ class Simulator:
             if self.end_simulation():
                 print(self.env.final_state)
                 print(self.statistics)
-                # input()
                 break
             print("---Iteration #", self.iter, "---")
             
@@ -61,7 +70,7 @@ class Simulator:
                     c.do_action(self.env)
             
 
-            if ((self.iter + 1) % self.t ) == 0:
+            if ((self.iter + 1 ) % self.t ) == 0:
                 print("-------------Random Variation----------")
                 print(self.env)
                 self.random_variation_world()
@@ -70,8 +79,7 @@ class Simulator:
 
             self.iter = self.iter + 1
             print(self.env)
-            # input()
-        # return self.end_simulation()
+
          
 def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type):
     s = Simulator()
@@ -89,5 +97,5 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_t
     
 
 if __name__ == '__main__':
-    bot_type = CleanerRobot
-    simulate(1, 50, 5, 5, 10, 10, 4, bot_type)
+    bot_type = Robot
+    simulate(30, 50, 5, 5, 25, 25, 5, bot_type)
