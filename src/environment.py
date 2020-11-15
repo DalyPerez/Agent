@@ -62,7 +62,7 @@ class Environment:
         self.guards = []
         self.final_state = None
 
-    def restart_map(self, N, M, bot, bot_has_child, bot_floor, num_of_dirty, num_of_obst, num_childs, childs_in_guard):
+    def restart_map(self, N, M, bot, bot_has_child, bot_floor, bot_and_child, num_of_dirty, num_of_obst, num_childs, childs_in_guard):
         print("total:", N*M)
         print("dirty:", num_of_dirty)
         print("obst:", num_of_obst)
@@ -85,6 +85,7 @@ class Environment:
             first_guard = r.sample(cell, 1)[0]
         self.consecutive_guards(first_guard[0], first_guard[1], num_childs, self.guards, bot.position )
         cell = cell.difference(self.guards)
+        print("New guards:", self.guards)
         print("guards", len(cell))
 
         # select the guards with childs
@@ -92,6 +93,8 @@ class Environment:
         for c in range(childs_in_guard):
             child_cell = self.guards[c]
             guards_with_childs.append(child_cell)
+        if childs_in_guard > 0:
+            print("Set childs in this guards", guards_with_childs)
 
         # dirty cell
         if bot_floor == DIRTY:
@@ -143,7 +146,7 @@ class Environment:
         print("cell", len(cell))
 
         for j in range(rest_childs):
-            name = f'C{i + j}' 
+            name = f'C{j + i}' 
             pos = childs_pos[j]
             c = Child(name, pos)
             childs[name] = c
@@ -153,7 +156,8 @@ class Environment:
         if bot_has_child:
             c = Child(f'C{len(self.guards)}', bot.position)
             bot.child_carried = c
-        self.get_position(bot.position).acquire(bot)
+        if not bot_and_child:
+            self.get_position(bot.position).acquire(bot)
 
         return bot, childs
 
@@ -384,10 +388,11 @@ class Environment:
             p_cell.set_dirty()
             self.dirty_cells += 1
       
-    def random_variation(self, bot, has_child, bot_floor):
+    def random_variation(self, bot, has_child, bot_floor, bot_and_child):
         print("Guards:", self.guards)
         print("Childs in guard", self.cant_childs_in_guards() )
-        bot, childs = self.restart_map(self.N, self.M, bot, has_child, bot_floor, self.dirty_cells, self.obst_cells, len(self.guards), self.cant_childs_in_guards() )
+        # input()
+        bot, childs = self.restart_map(self.N, self.M, bot, has_child, bot_floor, bot_and_child, self.dirty_cells, self.obst_cells, len(self.guards), self.cant_childs_in_guards() )
         print("GUARDS AFTER VARIATION:",self.guards)
         return bot, childs
 

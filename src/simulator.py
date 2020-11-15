@@ -21,19 +21,28 @@ class Simulator:
         bot_pos = (r.choice(range(N)), r.choice(range(M)))
         bot = bot_type(bot_pos)
         
-        self.bot, self.childs = self.env.restart_map(N, M, bot, False, EMPTY, num_of_dirty, num_of_obs, num_childs, 0 )
+        self.bot, self.childs = self.env.restart_map(N, M, bot, False, EMPTY, False, num_of_dirty, num_of_obs, num_childs, 0 )
     
     def random_variation_world(self):
         #info of the bot position
+        bot_cell = self.env.get_position(self.bot.position)
         has_child = self.bot.has_child()
-        bot_floor = self.env.get_position(self.bot.position).floor
+        bot_floor = bot_cell.floor
+        bot_and_child = False
+        if bot_floor == GUARD and isinstance(bot_cell.obj, Child) :
+            bot_and_child = True
         print("BOT INFO:" , has_child, bot_floor)
         if isinstance(self.bot, ProtectRobot):
             bot_type = ProtectRobot
-        else:
+        elif isinstance(self.bot, CleanerRobot):
             bot_type = CleanerRobot
+        else:
+            bot_type = Robot
         bot = bot_type(self.bot.position)
-        self.bot, self.childs = self.env.random_variation(bot, has_child, bot_floor)
+        # input()
+        self.bot, self.childs = self.env.random_variation(bot, has_child, bot_floor, bot_and_child)
+        # input()
+
 
     def end_simulation(self):
         if self.iter == 100:
@@ -97,5 +106,5 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_t
     
 
 if __name__ == '__main__':
-    bot_type = Robot
-    simulate(30, 50, 5, 5, 25, 25, 5, bot_type)
+    bot_type = ProtectRobot
+    simulate(1000, 10, 5, 5, 25, 25, 5, bot_type)
