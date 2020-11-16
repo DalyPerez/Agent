@@ -4,6 +4,8 @@ from agent import CleanerRobot, ProtectRobot
 class Simulator:
     def __init__(self):
         self.t = None
+        self.N = None
+        self.M = None
         self.iter = 0
         self.env = None
         self.bot = None
@@ -12,6 +14,8 @@ class Simulator:
 
     def init_world(self, t, N, M, dirty_porcent, obstacle_porcent, num_childs, bot_type):
         self.t = t
+        self.N = N
+        self.M = M
         self.iter = 0
         self.env = Environment(t, N, M)
         total = N * M - 2*num_childs - 1
@@ -21,28 +25,11 @@ class Simulator:
         bot_pos = (r.choice(range(N)), r.choice(range(M)))
         bot = bot_type(bot_pos)
         
-        self.bot, self.childs = self.env.restart_map(N, M, bot, False, EMPTY, False, num_of_dirty, num_of_obs, num_childs, 0 )
-    
-    def random_variation_world(self):
-        #info of the bot position
-        bot_cell = self.env.get_position(self.bot.position)
-        has_child = self.bot.has_child()
-        bot_floor = bot_cell.floor
-        bot_and_child = False
-        if bot_floor == GUARD and isinstance(bot_cell.obj, Child) :
-            bot_and_child = True
-        print("BOT INFO:" , has_child, bot_floor)
-        if isinstance(self.bot, ProtectRobot):
-            bot_type = ProtectRobot
-        elif isinstance(self.bot, CleanerRobot):
-            bot_type = CleanerRobot
-        else:
-            bot_type = Robot
-        bot = bot_type(self.bot.position)
-        # input()
-        self.bot, self.childs = self.env.random_variation(bot, has_child, bot_floor, bot_and_child)
-        # input()
+        self.bot, self.childs = self.env.restart_map(N, M, bot, num_of_dirty, num_of_obs, num_childs )
 
+
+    def random_variation_world(self):
+       self.env.random_variation(self.bot.position)
 
     def end_simulation(self):
         if self.iter == 100:
@@ -78,6 +65,8 @@ class Simulator:
                 if c.is_active:
                     c.do_action(self.env)
             
+            print(self.env)
+            
 
             if ((self.iter + 1 ) % self.t ) == 0:
                 print("-------------Random Variation----------")
@@ -87,7 +76,7 @@ class Simulator:
                 # input()
 
             self.iter = self.iter + 1
-            print(self.env)
+          
 
          
 def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type):
