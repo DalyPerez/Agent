@@ -40,7 +40,7 @@ class Robot (Agent):
         return self.child_carried != None
 
     def posible_movements(self, env):
-        ady = env.get_adyacents(self.position)
+        ady = get_adyacents(self.position)
         choices = []
         for p in ady:
             direction = rest_positions(p, self.position)
@@ -90,7 +90,7 @@ class Child (Agent):
         self.is_carried = False 
 
     def posible_movements(self, env):
-        ady = env.get_adyacents(self.position)
+        ady = get_adyacents(self.position)
         choices = []
         for p in ady:
             direction = rest_positions(p, self.position)

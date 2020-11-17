@@ -341,11 +341,11 @@ class Environment:
         obst_cells = []
         for i in range(self.N):
             for j in range(self.M):
-                cell = self.get_position((i, j))
-                cell_floor = cell.floor
                 if (i, j) == bot_position:
                     continue
                
+                cell = self.get_position((i, j))
+                cell_floor = cell.floor
                 if cell_floor == GUARD:
                     guard_cells.append(cell)
                 elif cell_floor == DIRTY:
@@ -372,7 +372,7 @@ class Environment:
             first_guard = bot_position
         self.consecutive_guards(first_guard[0], first_guard[1], len(self.guards), guard_new, bot_position )
 
-        self.guards = guard_new     
+        self.guards = [ i for i in guard_new ]     
         if bot_position in guard_new:
             guard_new.remove(bot_position)
 
