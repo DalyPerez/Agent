@@ -95,4 +95,4 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_t
 
 if __name__ == '__main__':
     bot_type = ProtectRobot
-    simulate(100000, 20, 5, 5, 25, 25, 5, bot_type)
+    simulate(100, 20, 5, 5, 25, 25, 5, bot_type)

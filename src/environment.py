@@ -77,13 +77,21 @@ class Environment:
         self.consecutive_guards(first_guard[0], first_guard[1], num_childs, self.guards, bot.position )
         cell = cell.difference(self.guards)
 
+        #obs cell ensure conexity
+        obs_cell = []
+        count = num_of_obst
+        for i in cell:
+            if count == 0:
+                break
+            partial_obs = r.sample(cell, 1)[0]
+            if connect(self.N, self.M, obs_cell + [partial_obs]):
+                obs_cell.append(partial_obs)
+                count -= 1
+        cell = cell.difference(obs_cell)
+
         #dirty cell
         dirty_cell = r.sample(cell, num_of_dirty)
         cell = cell.difference(dirty_cell)
-
-        #obs cell
-        obs_cell = r.sample(cell, num_of_obst)
-        cell = cell.difference(obs_cell)
 
         # create cells for each type
         types = [EMPTY, DIRTY, OBSTACLE, GUARD, EMPTY]
@@ -432,7 +440,7 @@ if __name__ == '__main__':
     bot = ProtectRobot((2,2))
     env.restart_map(N, M, bot, 3, 3, 5 )
     print(env)
-    env.random_variation(bot.position)
+    env.random_variation(bot)
     print(env)
     # m = [['C', 'O', 'O', 'O', 'E'], ['R', 'E', 'E', 'E', 'E']]
     # env = Environment(t, 2, 5)
