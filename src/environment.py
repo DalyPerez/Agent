@@ -228,7 +228,7 @@ class Environment:
         new_pos = sum_positions(p, direction)
         if self.is_valid_position(new_pos):
             cell = self.get_position(new_pos)
-            if (cell.is_empty() and not cell.is_full()) or cell.is_obstacle():
+            if (cell.is_empty() and (not cell.is_full())) or cell.is_obstacle():
                 return True
             else:
                 return False
@@ -253,9 +253,7 @@ class Environment:
     def move_child(self, child, direction):
         child_cell = self.get_position(child.position)
         new_cell = self.get_position(sum_positions(child.position, direction))
-        if new_cell.is_guard(): #if child go to guard => this child disable their actions 
-            child.is_active = False
-        elif new_cell.is_empty() and not new_cell.is_full():
+        if new_cell.is_empty() and not new_cell.is_full():
             child_cell.release()
             child.change_position(direction)
             new_cell.acquire(child)
@@ -359,7 +357,9 @@ class Environment:
         return guard_cells, dirty_cells, obst_cells, empty_cells
 
     #TODO revisar childs in simulator
-    def random_variation(self, bot_position):
+    def random_variation(self, bot):
+        print("old guards:", self.guards)
+        bot_position = bot.position
         r = random.Random()
         guard_old, dirty_old, obst_old, empty_old = self.get_env_floors(bot_position)
         bot_cell = self.get_position(bot_position)
@@ -391,6 +391,7 @@ class Environment:
         x, y = bot_position
         self.map[x][y] = bot_cell
 
+        childs = {}
         types = [GUARD, DIRTY, OBSTACLE, EMPTY ]
         old_cells = [guard_old, dirty_old, obst_old, empty_old]
         new_cells = [guard_new, dirty_new, obst_new, empty_new]
@@ -402,8 +403,18 @@ class Environment:
                 cell.p = p
                 if cell.is_full():
                     cell.obj.position = p
+                    child = cell.obj
+                    childs[child.name] = child
                 self.map[x][y] = cell
                 c += 1
+
+        if bot.has_child():
+            child = bot.child_carried
+            childs[child.name] = child
+
+        print("New guards:" , self.guards)
+        
+        return childs
 
     def __str__(self):
         s = ""
@@ -416,14 +427,20 @@ if __name__ == '__main__':
     N = 5
     M = 5
     t = 10
+    
     env = Environment(t, N, M)
     bot = ProtectRobot((2,2))
     env.restart_map(N, M, bot, 3, 3, 5 )
     print(env)
     env.random_variation(bot.position)
     print(env)
-  
-    
+    # m = [['C', 'O', 'O', 'O', 'E'], ['R', 'E', 'E', 'E', 'E']]
+    # env = Environment(t, 2, 5)
+    # env.load_map(m)
+    # print(env)
+    # child = env.get_position((0, 0)).obj
+    # env.move_child(child, (0, 1) )
+    # print(env)
 
 
 

@@ -27,9 +27,8 @@ class Simulator:
         
         self.bot, self.childs = self.env.restart_map(N, M, bot, num_of_dirty, num_of_obs, num_childs )
 
-
     def random_variation_world(self):
-       self.env.random_variation(self.bot.position)
+        self.childs = self.env.random_variation(self.bot)
 
     def end_simulation(self):
         if self.iter == 100:
@@ -96,4 +95,4 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_t
 
 if __name__ == '__main__':
     bot_type = ProtectRobot
-    simulate(1000, 10, 5, 5, 25, 25, 5, bot_type)
+    simulate(100000, 20, 5, 5, 25, 25, 5, bot_type)
