@@ -31,7 +31,7 @@ class Simulator:
         self.childs = self.env.random_variation(self.bot)
 
     def end_simulation(self):
-        if self.iter == 100:
+        if self.iter == 100 * self.t :
             self.env.final_state = "STOP"
             self.statistics["STOP"] += 1
             self.statistics["DIRTY"] += self.env.dirty_porcent()
@@ -54,35 +54,30 @@ class Simulator:
                 print(self.env.final_state)
                 print(self.statistics)
                 break
-            print("---Iteration #", self.iter, "---")
-            
-            print("-> Bot Turn")
+            # print("---Iteration #", self.iter, "---")
+            # print("-> Bot Turn")
             self.bot.do_action(self.env)
             
-            print("-> Childs turn")
+            # print("-> Childs turn")
             for c in self.childs.values():
                 if c.is_active:
                     c.do_action(self.env)
             
-            print(self.env)
-            
-
+            # print(self.env)
+    
             if ((self.iter + 1 ) % self.t ) == 0:
-                print("-------------Random Variation----------")
-                print(self.env)
+                # print("-------------Random Variation----------")
                 self.random_variation_world()
-                print(self.env)
-                # input()
+                # print(self.env)
 
             self.iter = self.iter + 1
-          
-
+ 
          
 def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type):
     s = Simulator()
     for i in range(iterations):
         s.init_world(t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type)
-        print(s.env)
+        # print(s.env)
         print("START SIMULATION : ", i)
         s.run()
     "------------------SIMULATION RESULTS----------------"
@@ -94,5 +89,21 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_t
     
 
 if __name__ == '__main__':
+    t = 20
+    N = 40
+    M = 2
+    D = 5
+    O = 5
+    C = 3
+    bot_type = Robot
+    simulate(30, t, N, M, D, O, C, bot_type)
+    input()
+
     bot_type = ProtectRobot
-    simulate(100, 20, 5, 5, 25, 25, 5, bot_type)
+    simulate(30, t, N, M, D, O, C, bot_type)
+    input()
+
+    bot_type = CleanerRobot
+    simulate(30, t, N, M, D, O, C, bot_type)
+
+    

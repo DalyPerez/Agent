@@ -54,7 +54,6 @@ class Environment:
     def __init__(self, t, N, M):
         self.t = t
         self.map = [[None for j in range(M)] for i in range(N)]
-        self.total = N * M
         self.N = N
         self.M = M
         self.dirty_cells = 0
@@ -182,7 +181,8 @@ class Environment:
         return solve
         
     def dirty_porcent(self):
-        return (self.dirty_cells * 100) / self.total
+        total = self.N * self.M 
+        return (self.dirty_cells * 100) / total
 
     def set_position(self, p, obj):
         x, y = p
@@ -364,45 +364,76 @@ class Environment:
                     empty_cells.append(cell)
         return guard_cells, dirty_cells, obst_cells, empty_cells
 
-    #TODO revisar childs in simulator
     def random_variation(self, bot):
-        print("old guards:", self.guards)
         bot_position = bot.position
         r = random.Random()
         guard_old, dirty_old, obst_old, empty_old = self.get_env_floors(bot_position)
         bot_cell = self.get_position(bot_position)
         positions = set([(i,j) for i in range(self.N) for j in range(self.M)])
         positions = positions.difference([bot_position])
-        guard_new = dirty_new = obst_new = empty_new = []
+        guard_new = []
+        dirty_new = []
+        obst_new = []
+        empty_new = []
 
         first_guard = r.sample(positions, 1)[0]
         if bot_cell.floor == GUARD:
             first_guard = bot_position
         self.consecutive_guards(first_guard[0], first_guard[1], len(self.guards), guard_new, bot_position )
+        print("old guards:", [i.p for i in guard_old])
+        print("new guards:", guard_new)
+        print("self guards:", self.guards)
 
-        self.guards = [ i for i in guard_new ]     
+        self.guards = [i for i in guard_new]
+        
         if bot_position in guard_new:
             guard_new.remove(bot_position)
-
         positions = positions.difference(guard_new)
+        
+        #put the obstacles and ensure the conexity
+        obs_cell = []
+        for i in range(len(guard_new)): #adding the guards with childs because are obstacles for conexity
+            cell = guard_old[i]
+            if cell.is_full() and isinstance(cell.obj, Child):
+                obs_cell.append(guard_new[i])
+    
+        count = len(obst_old)
+        obst_new = []
+        shuffle_pos = [i for i in positions]
+        r.shuffle(shuffle_pos)
+        
+        for i in shuffle_pos:
+            if count == 0:
+                break
+            partial_obs = i
+            if connect(self.N, self.M, obs_cell + [partial_obs]):
+                obs_cell.append(partial_obs)
+                obst_new.append(partial_obs)
+                count -= 1
+        positions = positions.difference(obst_new)
+        if count > 0:
+            obst_new_new = r.sample(positions, count)
+            positions = positions.difference(obst_new_new)
+            obst_new += obst_new_new
+
+        print("new obstacles:", obst_new)
 
         dirty_new = r.sample(positions, len(dirty_old))
         positions = positions.difference(dirty_new)
-
-        obst_new = r.sample(positions, len(obst_old))
-        positions = positions.difference(obst_new)
 
         empty_new = r.sample(positions, len(empty_old))
         positions = positions.difference(empty_new)
 
         #set bot cell
         x, y = bot_position
-        self.map[x][y] = bot_cell
+        mp = [[0 for j in range(self.M)] for i in range(self.N)]
+        mp[x][y] = bot_cell
 
         childs = {}
         types = [GUARD, DIRTY, OBSTACLE, EMPTY ]
         old_cells = [guard_old, dirty_old, obst_old, empty_old]
         new_cells = [guard_new, dirty_new, obst_new, empty_new]
+
         for i in range(len(types)):
             c = 0
             for p in new_cells[i]:
@@ -410,25 +441,62 @@ class Environment:
                 cell = old_cells[i][c]
                 cell.p = p
                 if cell.is_full():
-                    cell.obj.position = p
                     child = cell.obj
+                    child.position = p
                     childs[child.name] = child
-                self.map[x][y] = cell
+                mp[x][y] = cell
                 c += 1
-
+        
+        self.map = mp
         if bot.has_child():
             child = bot.child_carried
+            child.position = bot.position
             childs[child.name] = child
 
-        print("New guards:" , self.guards)
+        # print("New guards:" , self.guards)
         
         return childs
+
+    def ensure(self, bot, childs, guards_pos):
+        childs_pos = []
+        bot_pos = None
+        for i in range(self.N):
+            for j in range(self.M):
+                cell = self.get_position((i, j))
+                if cell.is_full():
+                    if isinstance(cell.obj, Robot):
+                        bot_pos = (i, j)
+                    else:
+                        childs_pos.append((i, j))
+        if bot.position != bot_pos:
+            print("Bot different")
+            print("env bot:", bot_pos)
+            print("sim bot:", bot.position)
+            return False
+        if len(childs_pos) != len(childs):
+            print("Childs differents")
+            print("env childs:", childs_pos)
+            print("sim childs:", childs)
+            print()
+            return False
+        if len(guards_pos) != len(self.guards):
+            print("Guards differents")
+            print("env guards:", self.guard)
+            print("sim guards:", guards_pos)
+            return False
+        for g in self.guards:
+            if not (g in guards_pos):
+                print("Another guard")
+                return False
+        return True
+
 
     def __str__(self):
         s = ""
         for i in range(self.N):
             s += str(([ str(self.map[i][j]) for j in range(self.M) ])) + "\n"
         return s
+
 
 if __name__ == '__main__':
     r = random.Random()
@@ -442,13 +510,3 @@ if __name__ == '__main__':
     print(env)
     env.random_variation(bot)
     print(env)
-    # m = [['C', 'O', 'O', 'O', 'E'], ['R', 'E', 'E', 'E', 'E']]
-    # env = Environment(t, 2, 5)
-    # env.load_map(m)
-    # print(env)
-    # child = env.get_position((0, 0)).obj
-    # env.move_child(child, (0, 1) )
-    # print(env)
-
-
-

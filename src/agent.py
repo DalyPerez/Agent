@@ -223,15 +223,21 @@ class CleanerRobot(Robot):
         else:
             self.state = Robot.CLEAN
         bot_cell = env.get_position(self.position)
+        posible_action = []
         action = None
         if self.state == Robot.SAVE and bot_cell.is_guard():
             action = self.drop_child
+            posible_action.append(action)
         if self.state == Robot.CLEAN and bot_cell.is_dirty():
             action = self.clean_cell
+            posible_action.append(action)
         else: 
             action = self.move
-
+            posible_action.append(action)
+        
+        action = rnd.choice(posible_action)
         return action(env)
+     
     
 
 
