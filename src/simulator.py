@@ -89,19 +89,19 @@ def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_t
     
 
 if __name__ == '__main__':
-    t = 20
-    N = 40
-    M = 2
+    t = 100
+    N = 30
+    M = 3
     D = 5
-    O = 5
-    C = 3
-    bot_type = Robot
-    simulate(30, t, N, M, D, O, C, bot_type)
-    input()
+    O = 20
+    C = 2
+    # bot_type = Robot
+    # simulate(30, t, N, M, D, O, C, bot_type)
+    # input()
 
-    bot_type = ProtectRobot
-    simulate(30, t, N, M, D, O, C, bot_type)
-    input()
+    # bot_type = ProtectRobot
+    # simulate(30, t, N, M, D, O, C, bot_type)
+    # input()
 
     bot_type = CleanerRobot
     simulate(30, t, N, M, D, O, C, bot_type)
