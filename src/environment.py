@@ -452,44 +452,8 @@ class Environment:
             child = bot.child_carried
             child.position = bot.position
             childs[child.name] = child
-
-        # print("New guards:" , self.guards)
         
         return childs
-
-    def ensure(self, bot, childs, guards_pos):
-        childs_pos = []
-        bot_pos = None
-        for i in range(self.N):
-            for j in range(self.M):
-                cell = self.get_position((i, j))
-                if cell.is_full():
-                    if isinstance(cell.obj, Robot):
-                        bot_pos = (i, j)
-                    else:
-                        childs_pos.append((i, j))
-        if bot.position != bot_pos:
-            print("Bot different")
-            print("env bot:", bot_pos)
-            print("sim bot:", bot.position)
-            return False
-        if len(childs_pos) != len(childs):
-            print("Childs differents")
-            print("env childs:", childs_pos)
-            print("sim childs:", childs)
-            print()
-            return False
-        if len(guards_pos) != len(self.guards):
-            print("Guards differents")
-            print("env guards:", self.guard)
-            print("sim guards:", guards_pos)
-            return False
-        for g in self.guards:
-            if not (g in guards_pos):
-                print("Another guard")
-                return False
-        return True
-
 
     def __str__(self):
         s = ""
