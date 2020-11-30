@@ -4,12 +4,12 @@
 \contentsline {section}{\numberline {2}Modelos de Agentes}{4}
 \contentsline {subsection}{\numberline {2.1}Agente ProtectRobot}{5}
 \contentsline {subsection}{\numberline {2.2}Agente CleanerRobot}{6}
+\contentsline {subsection}{\numberline {2.3}Agente Robot(random)}{7}
 \contentsline {section}{\numberline {3}Ideas seguidas para la implementaci\'on}{7}
-\contentsline {subsection}{\numberline {3.1}Representaci\'on del ambiente}{7}
+\contentsline {subsection}{\numberline {3.1}Representaci\'on del ambiente}{8}
 \contentsline {subsection}{\numberline {3.2}Creaci\'on del ambiente inicial}{8}
 \contentsline {subsection}{\numberline {3.3}Variaci\'on aleatoria}{8}
 \contentsline {subsection}{\numberline {3.4}Selecci\'on de la direcci\'on a moverse}{8}
 \contentsline {subsection}{\numberline {3.5}Simulador}{9}
-\contentsline {section}{\numberline {4}Simulaciones}{10}
-\contentsline {section}{\numberline {5}Ejecuci\'on}{10}
-\contentsline {section}{\numberline {6}Conclusiones}{10}
+\contentsline {section}{\numberline {4}Experimentos}{11}
+\contentsline {section}{\numberline {5}Conclusiones}{13}

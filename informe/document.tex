@@ -23,7 +23,7 @@
 	commentstyle=\color{blue!50},
 	backgroundcolor=\color{gray!9},
 	identifierstyle = \color{gray!161},
-	stringstyle = \color{yellow},
+	stringstyle = \color{red},
 	numberstyle = \color{green},
 	columns=fullflexible,
 	showspaces=false
@@ -75,7 +75,7 @@
 
 %define title
 \author{
-	Dalianys P\'erez Perera\\
+	Dalianys Pérez Perera\\
 	C-411 
 }
 \title{Proyecto de Agentes   \\
@@ -108,7 +108,7 @@ Tanto el robot de casa como los niños constituyen agentes mostrando su capacidad
   \end{figure}  
   
   
-Se implementaron dos tipos de robot de casa: \textbf{ProtectRobot} el cual brinda más prioridad a guardar los niños en el corral y el robot \textbf{CleanerRobot} quien mantiene la casa lo más limpia posible y solo lleva a un niño al corral en caso de encontrarse con él. No obstante, el agente \textbf{Robot} de por sí, constituye un robot de casa que actúa aleatoriamente, seleccionando una acción a ejecutar entre todas las posibles. Como este último no se basa en una estrategia o política a seguir, los resultados del mismo no aportarán ningún tipo de información sobre su efectividad como robot de casa. Por tal motivo, solo se tendrán en cuenta los experimentos realizados con el \textit{ProtectRobot} y el \textit{CleanerRobot}.\\
+Se implementaron dos tipos de robot de casa: \textbf{ProtectRobot} el cual brinda más prioridad a guardar los niños en el corral y el robot \textbf{CleanerRobot} quien mantiene la casa lo más limpia posible y solo lleva a un niño al corral en caso de encontrarse con él. No obstante, el agente \textbf{Robot} de por sí, constituye un robot de casa que actúa aleatoriamente, seleccionando una acción a ejecutar entre todas las posibles. 
 
   
  La simulación parte de una configuración inicial del ambiente:
@@ -123,14 +123,17 @@ Se implementaron dos tipos de robot de casa: \textbf{ProtectRobot} el cual brind
  	\item  \lstinline|bot_type|: tipo de robot de casa(Robot, ProtectRobot, CleanerRobot).
  \end{itemize}
 
-Con esta información se genera un ambiente a través de la función \lstinline|restart_map| la cual además de los datos anteriores recibe al robot ya con una posición aleatoria. En un inicio solo está ubicado el robot, luego se pasa a ubicar el corral garantizando siempre que sus casillas estén dispuestas consecutivamente, posteriormente se van seleccionando las casillas sucias, los obstáculos y los niños, descartando en cada paso, las casillas seleccionadas en la repartición anterior. Se asegura además que los niños no caigan dentro del corral inicialmente y que los robot no comiencen cargando a un niño.
+Con esta información se genera un ambiente a través de la función \lstinline|restart_map| la cual además de los datos anteriores recibe al robot ya con una posición aleatoria. En un inicio solo está ubicado el robot, luego se pasa a ubicar el corral garantizando siempre que sus casillas estén dispuestas consecutivamente. Posteriormente se van seleccionando las casillas que contendrán los obstáculos. Con cada posible posición de un obstáculo se comprueba que no desconecte el ambiente, pues, podría pasar que los obstáculos formen una columna por tanto el robot no podría pasar a uno de los lados. Se van descartando en cada paso, las casillas seleccionadas en la repartición anterior. Se asegura además que los niños no caigan dentro del corral inicialmente y que los robot no comiencen cargando a un niño.
 
 
 \section{Modelos de Agentes}
 
-Al estar en presencia de un ambiente dinámico, se decidió que los agentes fueran reactivos, ya que los eventos que ocurren en el ambiente pueden afectar los objetivos del agente o las suposiciones en las que se basa el proceso que el agente está ejecutando para lograr su objetivo. Por tanto el agente debe ser sensitivo a estos cambios. Por otro lado, ambos robots de casa en dependencia de su estado y el del ambiente pueden determinar cumplir un objetivo( encontrar un niño, llevar un niño al corral,...), es en este punto donde se manifiestan pequeños rasgos de pro-actividad.
+Al estar en presencia de un ambiente dinámico, se decidió que los agentes tuvieran rasgos reactivos, ya que los eventos que ocurren en el ambiente pueden afectar los objetivos del agente o las suposiciones en las que se basa el proceso que el agente está ejecutando para lograr su objetivo. Por tanto el agente debe ser sensitivo a estos cambios. 
 
-Los niños son agentes de tipo \textit{Child} y la única acción que realizan es moverse aleatoriamente a una de las direcciones posibles durante el turno del ambiente, una casilla a lo sumo, pues estos pueden decidir empujar a un obstáculo y que la acción no tenga efecto. Cada actuar de un niño trae consigo la generación de basura en la cuadrícula del ambiente donde está contenido dicho niño.
+El agente \textit{Robot} es puramente reactivo, al seleccionar la acción a ejecutar aleatoriamente como se había dicho anteriormente.
+Por otro lado, los robots de casa \textit{ProtectRobot} y \textit{CleanerRobot} en dependencia de su estado y el del ambiente pueden determinar cumplir un objetivo( encontrar un niño, llevar un niño al corral, etc), es en este punto donde se manifiesta la proactividad de los mismos. Por tales motivos se considera que estos últimos robots en determinados momentos actúan como reactivos, y en otros como proactivos. 
+
+Los niños son agentes puramente reactivos de tipo \textit{Child} y la única acción que realizan es moverse aleatoriamente a una de las direcciones posibles durante el turno del ambiente, una casilla a lo sumo, pues estos pueden decidir empujar a un obstáculo y que la acción no tenga efecto. Cada actuar de un niño trae consigo la generación de basura en la cuadrícula del ambiente donde está contenido dicho niño.
 
 Los robots constituyen agentes con estados, pues su proceso de toma de decisión está basado en la percepción que necesitan captar del ambiente de acuerdo al estado interno actual del robot. El comportamiento de un robot es construido a partir de un número de conductas que él mismo puede asumir en dependencia de su estado. Los posibles estados de un robot son:
 \begin{itemize}
@@ -155,13 +158,11 @@ En el caso de los robots, además de la acción de moverse tienen otras dos accion
 	\item \lstinline|clean_cell|: limpia la casilla donde está situado.
 \end{itemize}
 
-
-
-
  En las siguientes secciones se ejemplifica lo anterior con los modelos de agentes implementados.
 
+
 \subsection{Agente ProtectRobot}
-Como ya se mencionó, este robot prioriza llevar todos los niños al corral desde un inicio y cuando lo logre es que se mantiene limpiando la casa. Por defecto el estado de este robot es FIND, pues cuando comienza la simulación su primer objetivo es encontrar al niño más cercano. En el siguiente esquema se muestran cada una de las conductas de este tipo de agente.
+Como ya se mencionó, este robot prioriza llevar todos los niños al corral desde un inicio y cuando lo logre es que se mantiene limpiando la casa. Por defecto el estado de este robot es FIND, pues cuando comienza la simulación su primer objetivo es encontrar al niño más cercano. En el siguiente código se muestran cada una de las conductas de este tipo de agente.
 
 \begin{lstlisting}
 def do_action(self, env):
@@ -195,12 +196,12 @@ def do_action(self, env):
 \textbf{Conducta 2:} el robot no está cargando niño y está sobre una casilla sucia, entonces la acción \lstinline|clean_cell| será una de las candidatas. Notar que si no está en estado SAVE, puede estar en estado CLEAN en el cual solo se limpian casillas o en estado FIND. En caso de estar en este último la acción a ejecutar puede ser moverse para acercarse al niño objetivo o limpiar la casilla actual. Ambas tendrían 50 \% de probabilidades.\\ 
 
 
-\textbf{Conducta 3:} el robot no está en estado CLEAN ni está parado sobre una casilla sucia, por tanto lo que hace es moverse. La dirección para la cual se moverá está determinada por el estado actual del robot, pues si es SAVE, se inclina hacia el corral más cercano, si es FIND se inclina hacia el niño más cercano y si es CLEAN se inclina hacia la casilla sucia más cercana.\\
+\textbf{Conducta 3:} el robot no está en estado CLEAN ni está parado sobre una casilla sucia, por tanto lo que hace es moverse. La dirección para la cual se moverá está determinada por el estado actual del robot, pues si es SAVE, se inclina hacia el corral más cercano y si es FIND se inclina hacia el niño más cercano .\\
 
 Finalmente se selecciona aleatoriamente la acción a ejecutar entre todas las posibles y en el único caso que podrían haber dos opciones es cuando el robot está en estado FIND parado sobre una casilla sucia, por lo que puede avanzar para alcanzar al niño o gastar la acción deteniéndose a limpiar. Nunca se decide limpiar una basura mientras el robot carga un niño, claramente le da más prioridad a guardar el niño.
 
 \subsection{Agente CleanerRobot}
-Este robot se preocupa más por la limpieza que por lograr tener todos los niños en el corral. La idea puede traer el inconveniente de que al tener la gran mayoría de los niños afuera, estos estén generando mayor cantidad de suciedad, la cual se irá acumulando y provocará rápidamente el despido del robot. En este punto influye también la cantidad de niños que haya en el ambiente, pues en caso de ser pocos, por lo general el robot no es despedido, satisfaciendo así su objetivo principal. Por mucho que limpie, en raras ocasiones podrá alcanzar el estado final teniendo todos los niños ubicados en el corral, por tanto la simulación será iterrumpida en la iteración 100.
+Este robot se preocupa más por la limpieza que por lograr tener todos los niños en el corral. La idea puede traer el inconveniente de que al tener la gran mayoría de los niños afuera, estos estén generando mayor cantidad de suciedad, la cual se irá acumulando y provocará rápidamente el despido del robot. En este punto influye también la cantidad de niños que haya en el ambiente, pues en caso de ser pocos, por lo general el robot no es despedido, satisfaciendo así su objetivo principal. Por mucho que limpie, en raras ocasiones podrá alcanzar el estado final teniendo todos los niños ubicados en el corral, por tanto la simulación será iterrumpida en la iteración $100t$.
 
  Los robots de este tipo no estarán nunca en estado FIND, pues solo llevan a un niño al corral en caso de haber coincidido con ellos en la misma casilla. La función \lstinline|do_action| de este agente muestra cómo se actualizan sus estados y se decide la acción a ejecutar.
 
@@ -232,11 +233,25 @@ def do_action(self, env):
 
 \textbf{Conducta 3:} Si no se presentan ninguna de las dos situaciones anteriores, las cuales son conducta con mayor prioridad, el robot se moverá hacia la dirección que se determine según su estado actual.
 
+\subsection{Agente Robot(random)}
 
+Este agente no sigue ningún tipo de estrategia, por tanto nunca se encuentra en algún estado. A continuación se muestra la función con la cual selecciona su acción.
+
+\begin{lstlisting}
+def do_action(self, env):
+	bot_cell = env.get_position(self.position)
+	posible_action = [ self.move ]
+	if bot_cell.is_dirty():
+		posible_action.append(self.clean_cell)
+	if self.has_child() and bot_cell.is_guard():
+		posible_action.append(self.drop_child)
+	action = rnd.choice(posible_action)
+	return action(env)
+\end{lstlisting}
  
 
 \section{Ideas seguidas para la implementación}
-A continuación se puntualizará cómo se tuvieron en cuenta e implementaron algunos aspectos importantes del problema a resolver.
+En esta sección se puntualizará cómo se tuvieron en cuenta e implementaron algunos aspectos importantes del problema a resolver.
 
 \subsection{Representación del ambiente}
 La clase \textbf{Environment} representa el ambiente del problema. El mismo está conformado por una matriz de objetos de tipo \textbf{Cell}, los cuales encapsulan la información de una casilla del mapa del ambiente. Cada casilla de estas tiene los siguientes atributos:
@@ -258,17 +273,19 @@ La clase \textbf{Environment} representa el ambiente del problema. El mismo está
 
 
 \subsection{Creación del ambiente inicial} 
-Para inicializar un ambiente se necesita una configuración inicial del mismo con los parámetros vistos en la primera sección. La función encargada de crearlo se adaptó de forma tal que pudiese ser reutilizada en la variación aleatoria. Por tanto recibe otros parámetros adicionales como  \lstinline|bot_has_child| para indicar si el robot se encuentra cargando un niño, \lstinline|bot_floor| el tipo de casilla donde se pondrá el robot y \lstinline|childs_in_guards| la cantidad de niños a ubicar sobre el corral. Durante la inicialización del ambiente estos argumentos toman los siguientes valores respectivamente: \lstinline|False|, \lstinline|EMPTY| y \lstinline|0|, pues en un inicio el robot no contiene ningún niño, estará sobre una casilla vacía y no hay niños en el corral.
+Para inicializar un ambiente se necesita una configuración inicial del mismo con los parámetros vistos en la primera sección. La función encargada de crearlo es ejecutada desde el \textit{Simulador}, recibiendo desde entonces la cantidad de casillas sucias y de obstáculos a poner además de los otros parámetros mencionados.
 
 \subsection{Variación aleatoria}
-Este proceso de variación aleatoria del ambiente consiste en reordenar todos los elementos del ambiente sin cambiar de estado ni posición al robot, por tanto, sería como reiniciar al ambiente pero a otro estado. Como se dijo anteriormente, se utiliza la misma función que crea el ambiente: \lstinline|restart_map|, y en este caso, los parámetros adicionales ya cobran significado. 
+Este proceso de variación aleatoria del ambiente consiste en reordenar todos los elementos del ambiente sin cambiar de estado ni posición al robot, por tanto, sería como reiniciar al ambiente pero a otro estado. Se lleva a cabo mediante la función \lstinline|random_variation|, la misma recibe la instancia del robot de casa del ambiente en el estado actual. 
 
-El encargado de ejecutar esta operación es el \textit{Simulator} y se lanzará cada $t$ iteraciones de la simulación. El simulador previamente recopila la información que necesita del robot, para que una vez se realice este proceso, se mantenga invariante su estado. Dicha información serían los parámetros adicionales antes mencionados.
+La idea detrás de la variación aleatoria es cambiar las posiciones a las celdas que constituyen el ambiente, garantizando siempre en la seleccción de las nuevas posiciones que el ambiente sea conexo y los corrales estén dispuestos consecutivamente. El objetivo de recibir al robot como parámetro es que la celda que lo contiene se mantenga intacta, o sea, sea la misma en el ambiente resultante de la variación.
+
+De esta forma continúan invariantes el robot y los niños que ya estaban ubicados en el corral lo seguirán estando, lo que posiblemente desde otra localización del corral. El encargado de ejecutar esta operación es el \textit{Simulator} y se lanzará cada $t$ iteraciones de la simulación. 
 
 \subsection{Selección de la dirección a moverse}
-En la definición del problema se plantea que los agentes solo podrán moverse en cuatro direcciones: NORTH (), SOUTH (), EAST () y WEST ().
+En la definición del problema se plantea que los agentes solo podrán moverse en cuatro direcciones: NORTH (-1, 0), SOUTH (1, 0), EAST (0, 1) y WEST (0, -1).
 
-Los agentes tienen una función \lstinline|select_direction| la cual es invocada cada vez que la acción a ejecutar sea moverse. La dirección retornada estará en correspondencia con el estado u objetivo en el que se encuentre el agente. En caso de ser un niño, la dirección será seleccionada aleatoriamente entre todos los posibles movimientos que pueda realizar el niño desde su posición actual, si no hay ninguno, entonces la dirección será (0, 0) indicando quedarse en el lugar.
+Los agentes tienen una función \lstinline|select_direction| la cual es invocada cada vez que la acción a ejecutar sea moverse. La dirección retornada estará en correspondencia con el estado u objetivo en el que se encuentre el agente. En caso de ser un niño, la dirección será seleccionada aleatoriamente entre todos los posibles movimientos que pueda realizar el niño desde su posición actual, si no hay ninguno, entonces la dirección será (0, 0),  indicando quedarse en el lugar.
 
 Esta función en los robots, se auxilia de un dfs el cual recibe un predicado especificando el tipo de casilla que cumple con su objetivo. El dfs determina cual es el camino más corto para alcanzar dicha meta y retorna la dirección de la próxima posición a donde moverse.
 
@@ -299,48 +316,404 @@ def select_direction(self, env):
 
 \subsection{Simulador}
 
-
+El módulo \lstinline|simulator.py| es el encargado de controlar toda la ejecución del problema. En él es donde se encuentra el robot, los niños y el ambiente, pudiendo conocer en todo momento sus estados. Además contabiliza los resultados de cada simulación en el atributo \lstinline|statistics|, siendo estos actualizados una vez se cumpla un estado final o se detenga la simulación.
 
 \begin{lstlisting}
 class Simulator:
 	def __init__(self):
 	self.t = None
+	self.N = None
+	self.M = None
 	self.iter = 0
 	self.env = None
 	self.bot = None
 	self.childs = {}
 	self.statistics = {"STOP": 0, "FIRE": 0, "DONE": 0, "DIRTY": 0}
 	
-	def init_world(self, t, N, M, dirty_porcent, obstacle_porcent,
-	 num_childs, bot_type):
+	def init_world(self, t, N, M, dirty_porcent, obstacle_porcent, num_childs,
+	 bot_type):
 	
 	def random_variation_world(self):
 	
 	def end_simulation(self):
 	
 	def run(self):
-		
+
 def simulate(iterations, t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type):
 	s = Simulator()
 	for i in range(iterations):
-	s.init_world(t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type)
-	print(s.env)
-	print("START SIMULATION : ", i)
-	s.run()
-	"------------------SIMULATION RESULTS----------------"
-	print("number of layoffs: ", s.statistics["FIRE"])
-	print("number of stop in iteration 100 : ", s.statistics["STOP"])
-	print("number of goal accomplished: ", s.statistics["DONE"])
-	print("average percentage of dirt: ", s.statistics["DIRTY"] / iterations)
+		s.init_world(t, N, M, dirty_porcent, obst_porcent, num_childs, bot_type)
+		print(s.env)
+		print("START SIMULATION : ", i)
+		s.run()
+		"------------------SIMULATION RESULTS----------------"
+		print("number of layoffs: ", s.statistics["FIRE"])
+		print("number of stop in iteration 100 : ", s.statistics["STOP"])
+		print("number of goal accomplished: ", s.statistics["DONE"])
+		print("average percentage of dirt: ", s.statistics["DIRTY"] / iterations)
+
+
 \end{lstlisting}
 
+Para probar el código es necesario abrir la consola desde la carpeta \textit{src} del proyecto y ejecutar \lstinline|python simulator.py|. Primeramente debe configurar en el método \lstinline|main| del archivo \lstinline|simulator.py| los parámetros que desea para la simulación. 
 
-\section{Simulaciones}
+\begin{lstlisting}
+if __name__ == '__main__':
+	t = 100
+	N = 3
+	M = 3
+	D = 5  # dirty porcent
+	O = 20 # obstacle porcent
+	C = 2  # num of childs
+	bot_type = ProtectRobot # robot type
+	simulate(30, t, N, M, D, O, C, bot_type)
+\end{lstlisting}
 
-\section{Ejecución}
+\newpage
+
+\section{Experimentos}
+A continuación se muestran los resultados obtenidos en varias simulaciones del problema. Todos se probaron con los tres tipos de robot de casa y se obtiene como salida la cantidad de victorias, cantidad de despidos del robot, la cantidad de veces en que no llegaron a un estado final, por lo que la simulación se detiene en la iteración $100t$, y el porciento medio de suciedad existente una vez terminada la ejecución.\\
+
+\begin{center}
+\begin{figure}[!h]
+	\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 1:} 
+			
+			\textbf{NxM:} $5x5$
+			
+			\textbf{valor de t:} 50
+			
+			\textbf{Obstáculos:} 25 \%
+			
+			\textbf{Suciedad:} 25 \%
+			
+			\textbf{Cantidad de niños:}	5
+	\end{minipage}
+	\begin{minipage}[!]{0.7\textwidth}
+		
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 21 & 9 & 0 & 18\\
+				\hline
+				ProtectRobot & 28 & 2 & 0 & 4 \\
+				\hline
+				CleanerRobot & 18 & 12  & 0 & 24.0\\
+				\hline
+			\end{tabular}
+		
+	\end{minipage}
+\end{figure}
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 2:} 
+			
+			\textbf{NxM:} $10x10$
+			
+			\textbf{valor de t:} 100
+			
+			\textbf{Obstáculos:} 15 \%
+			
+			\textbf{Suciedad:} 20 \%
+			
+			\textbf{Cantidad de niños:}	10
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+		\begin{tabular}{|c|c|c|c|c|}
+			\hline
+			Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+			\hline
+			Robot & 0 & 30 & 0 & 60.56\\
+			\hline
+			ProtectRobot & 28 & 2 & 0 & 4.36 \\
+			\hline
+			CleanerRobot & 0 & 30  & 0 & 60.86\\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	
+	\end{figure}	
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 3:} 
+			
+			\textbf{NxM:} $5x5$
+			
+			\textbf{valor de t:} 20
+			
+			\textbf{Obstáculos:} 15 \%
+			
+			\textbf{Suciedad:} 10 \%
+			
+			\textbf{Cantidad de niños:}	3
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 5 & 25 & 0 & 50.26\\
+				\hline
+				ProtectRobot & 29 & 1 & 0 & 2.0 \\
+				\hline
+				CleanerRobot & 7 & 23  & 0 & 46.66\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 4:} 
+			
+			\textbf{NxM:} $30x3$
+			
+			\textbf{valor de t:} 100
+			
+			\textbf{Obstáculos:} 20 \%
+			
+			\textbf{Suciedad:} 20 \%
+			
+			\textbf{Cantidad de niños:}	5
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 22 & 8 & 0 & 16.07\\
+				\hline
+				ProtectRobot & 29 & 1 & 0 & 2.0 \\
+				\hline
+				CleanerRobot & 28 & 2  & 0 & 4\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 5:} 
+			
+			\textbf{NxM:} $30x3$
+			
+			\textbf{valor de t:} 100
+			
+			\textbf{Obstáculos:} 20 \%
+			
+			\textbf{Suciedad:} 5 \%
+			
+			\textbf{Cantidad de niños:}	2
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 30& 0 & 0 & 0\\
+				\hline
+				ProtectRobot & 30 & 0 & 0 & 0 \\
+				\hline
+				CleanerRobot & 30 & 0  & 0 & 0\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 6:} 
+			
+			\textbf{NxM:} $3x3$
+			
+			\textbf{valor de t:} 100
+			
+			\textbf{Obstáculos:} 20 \%
+			
+			\textbf{Suciedad:} 5 \%
+			
+			\textbf{Cantidad de niños:}	2
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 20 & 10 & 0 & 22.2\\
+				\hline
+				ProtectRobot & 29 & 1 & 0 & 2.2 \\
+				\hline
+				CleanerRobot & 30 & 0  & 0 & 0\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 7:} 
+			
+			\textbf{NxM:} $3x3$
+			
+			\textbf{valor de t:} 100
+			
+			\textbf{Obstáculos:} 50 \%
+			
+			\textbf{Suciedad:} 5 \%
+			
+			\textbf{Cantidad de niños:}	2
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 30 & 0 & 0 & 0\\
+				\hline
+				ProtectRobot & 30 & 0 & 0 & 0 \\
+				\hline
+				CleanerRobot & 30 & 0  & 0 & 0\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 8:} 
+			
+			\textbf{NxM:} $10x10$
+			
+			\textbf{valor de t:} 20
+			
+			\textbf{Obstáculos:} 40 \%
+			
+			\textbf{Suciedad:} 30 \%
+			
+			\textbf{Cantidad de niños:}	3
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 26 & 0 & 4 & 0.3\\
+				\hline
+				ProtectRobot & 30 & 0 & 0 & 0 \\
+				\hline
+				CleanerRobot & 29 & 1  & 0 & 2.0\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 9:} 
+			
+			\textbf{NxM:} $15x15$
+			
+			\textbf{valor de t:} 20
+			
+			\textbf{Obstáculos:} 5 \%
+			
+			\textbf{Suciedad:} 3 \%
+			
+			\textbf{Cantidad de niños:}	3
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 6 & 24 & 0 & 48.31\\
+				\hline
+				ProtectRobot & 30 & 0 & 0 & 0 \\
+				\hline
+				CleanerRobot & 7 & 22  & 1 & 45.28\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+
+\begin{center}
+	\begin{figure}[!h]
+		\begin{minipage}[!]{0.3\textwidth}				
+			\textbf{Ambiente 10:} 
+			
+			\textbf{NxM:} $40x2$
+			
+			\textbf{valor de t:} 20
+			
+			\textbf{Obstáculos:} 5 \%
+			
+			\textbf{Suciedad:} 5 \%
+			
+			\textbf{Cantidad de niños:}	3
+		\end{minipage}
+		\begin{minipage}[!]{0.7\textwidth}
+			\begin{tabular}{|c|c|c|c|c|}
+				\hline
+				Tipo & Victorias & Despidos & Interrupciones & \% Suciedad\\
+				\hline
+				Robot & 4 & 24 & 2 & 48.16\\
+				\hline
+				ProtectRobot & 30 & 0 & 0 & 0 \\
+				\hline
+				CleanerRobot & 24 & 6  & 0 & 12.08\\
+				\hline
+			\end{tabular}
+		\end{minipage}
+		
+	\end{figure}	
+\end{center}
+
+
+
 
 \section{Conclusiones}
+En la sección anterior se evidencian los resultados de un subconjunto de los experimentos realizados bajo distintas configuraciones iniciales del ambiente. Para ello se tomaron valores de $t$ = 20, 50, 100. Como el robot random no se basa en una estrategia o política, los resultados del mismo no aportan ningún tipo de información sobre su efectividad como robot de casa. No obstante, en algunos escenarios particulares resultó victorioso en todas las simulaciones, y en otros aportó un buen porciento de victorias.
+
+En general el robot \textit{ProtectRobot} manifestó ser el más efectivo, pues en la totalidad de las simulaciones arrojó los mejores resultados. Por otro lado, la eficacia del \textit{CleanerRobot} depende en gran medida de la cantidad de niños, ejemplo de ello son los ambientes 5, 6 y 7.
+
+ Los ambientes 2 y 8 tienen las mismas dimensiones, sin embargo a pesar de que en el 2 la variación aleatoria se realice con más frecuencia, en este ambiente las victorias del robot limpiador fueron nulas debido a la existencia de una mayor cantidad de niños. Notar que el tamaño del ambiente también influye, pues en el ejemplo 9, que tiene solo 3 niños, el \textit{CleanerRobot} alcanzó pocas victorias. 
+ 
+Se concluye que en este tipo de ambientes, la combinación entre reactivo y proactivo brinda resultados de acorde a la estrategia y objetivos del agente, por lo que un agente puramente proactivo no tendría mucha utilidad en el mismo debido al dinamismo caracterísco del ambiente.
 
 
 
+
+
+
+
+	
 \end{document}
